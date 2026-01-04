@@ -124,6 +124,7 @@ namespace HFPF
 		virtual void OnGameConfigLoaded() override;
 
 		void SetupCursorLockMP();
+		void DetectFocusChange();
 
 		bool SetCursorLock(HWND hwnd);
 		void CaptureCursor(HWND hwnd, bool sw);
@@ -160,14 +161,32 @@ namespace HFPF
 			bool center_window;
 			int  offset_x;
 			int  offset_y;
+			bool detect_focus;
 		} m_conf;
+
+		bool m_focused;
+		bool m_focus_tracking;
 
 		MsgProc m_mp;
 
 		inline static REL::Relocation<std::uintptr_t> CreateWindowExAddress{ AID::CreateWindowEx_a, Offsets::CreateWindowEx_a };
 		inline static REL::Relocation<std::uintptr_t> UpscaleAddr{ AID::Upscale, Offsets::Upscale };
-		inline static REL::Relocation<std::uintptr_t> Write_iLocationX{ AID::Write_iLocationX, Offsets::Write_iLocationX };
-		inline static REL::Relocation<std::uintptr_t> Write_iLocationY{ AID::Write_iLocationX, Offsets::Write_iLocationY };
+		inline static REL::Version                    runtime = REL::Module::get().version();
+
+		inline static REL::Relocation<std::uintptr_t> Write_iLocationX{
+			runtime == F4SE::RUNTIME_1_11_169 ? AID::Write_iLocation_1_11_169 :
+			runtime == F4SE::RUNTIME_1_11_159 ? AID::Write_iLocation_1_11_159 :
+												AID::Write_iLocation,
+			Offsets::Write_iLocationX
+		};
+
+		inline static REL::Relocation<std::uintptr_t> Write_iLocationY{
+			runtime == F4SE::RUNTIME_1_11_169 ? AID::Write_iLocation_1_11_169 :
+			runtime == F4SE::RUNTIME_1_11_159 ? AID::Write_iLocation_1_11_159 :
+												AID::Write_iLocation,
+			Offsets::Write_iLocationY
+		};
+
 
 		struct
 		{

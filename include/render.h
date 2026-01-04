@@ -34,6 +34,7 @@ namespace HFPF
 		{
 			bool disable_clamp;
 			bool disable_vsync_loading;
+			bool disable_vsync_lockpicking;
 
 			std::uint8_t      fullscreen;
 			std::uint8_t      borderless;
@@ -66,6 +67,7 @@ namespace HFPF
 				float ui;
 				float ui_loadscreen;
 				float ui_pipboy;
+				float out_of_focus;
 				float ui_map;
 				float ui_inventory;
 				float ui_journal;
@@ -103,8 +105,12 @@ namespace HFPF
 			long long loading_fps;
 			long long lockpick_fps;
 			long long pipboy_fps;
+			long long out_of_focus_fps;
 			bool      comboKeyDown;
 		} m_limits;
+
+		
+		static void SetFocused(bool a_focused);
 
 		[[nodiscard]] float GetMaxFramerate(const DXGI_SWAP_CHAIN_DESC* pSwapChainDesc) const;
 		[[nodiscard]] bool  IsLimiterInstalled() { return limiter_installed; }
@@ -226,6 +232,7 @@ namespace HFPF
 		long long current_fps_max, oo_current_fps_max, oo_expire_time;
 		bool      has_fl_override;
 		bool      limiter_installed;
+		bool      m_focused;
 
 		struct m_fl
 		{
@@ -266,12 +273,12 @@ namespace HFPF
 		PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN m_D3D11CreateDeviceAndSwapChain_O;
 		CreateDXGIFactory_T                    m_createDXGIFactory_O;
 
-		inline static REL::Relocation<std::uintptr_t> FPS_Cap_Patch1{ AID::FPS_Cap_Patch1, (REL::Module::get().version() >= F4SE::RUNTIME_LATEST) ? Offsets::FPS_Cap_Patch1 : 0xBC7 };
-		inline static REL::Relocation<std::uintptr_t> FPS_Cap_Patch2{ AID::FPS_Cap_Patch1, (REL::Module::get().version() >= F4SE::RUNTIME_LATEST) ? Offsets::FPS_Cap_Patch2 : 0xBD0 };
-		inline static REL::Relocation<std::uintptr_t> Borderless_Patch{ AID::FPS_Cap_Patch1, (REL::Module::get().version() >= F4SE::RUNTIME_LATEST) ? Offsets::Borderless_Patch : 0xB87 };
+		inline static REL::Relocation<std::uintptr_t> FPS_Cap_Patch1{ AID::FPS_Cap_Patch1, Offsets::FPS_Cap_Patch1 };
+		inline static REL::Relocation<std::uintptr_t> FPS_Cap_Patch2{ AID::FPS_Cap_Patch1, Offsets::FPS_Cap_Patch2 };
+		inline static REL::Relocation<std::uintptr_t> Borderless_Patch{ AID::FPS_Cap_Patch1, Offsets::Borderless_Patch };
 		inline static REL::Relocation<std::uintptr_t> FullScreen_Patch1{ AID::FullScreen_Patch1, Offsets::FullScreen_Patch1 };
 		inline static REL::Relocation<std::uintptr_t> FullScreen_Patch3{ AID::FullScreen_Patch1, Offsets::FullScreen_Patch3 };
-		inline static REL::Relocation<std::uintptr_t> Screen_Patch{ AID::FPS_Cap_Patch1, (REL::Module::get().version() >= F4SE::RUNTIME_LATEST) ? Offsets::Screen_Patch : 0xB4A };
+		inline static REL::Relocation<std::uintptr_t> Screen_Patch{ AID::FPS_Cap_Patch1, Offsets::Screen_Patch };
 		inline static REL::Relocation<std::uintptr_t> MovRaxRcx{ AID::MovRaxRcx, Offsets::MovRaxRcx };
 		inline static REL::Relocation<std::uintptr_t> ResizeBuffersDisable{ AID::MovRaxRcx, Offsets::ResizeBuffersDisable };
 		inline static REL::Relocation<std::uintptr_t> ResizeBuffersInject{ AID::MovRaxRcx, Offsets::ResizeBuffers };
@@ -280,9 +287,9 @@ namespace HFPF
 		inline static REL::Relocation<std::uintptr_t> CreateDXGIFactory{ AID::CreateDXGIFactory, Offsets::CreateDXGIFactory };
 		inline static REL::Relocation<std::uintptr_t> D3D11CreateDeviceAndSwapChain{ AID::CreateDXGIFactory, Offsets::D3D11CreateDeviceAndSwapChain };
 		inline static REL::Relocation<std::uintptr_t> BethesdaVsync{ AID::CreateDXGIFactory, Offsets::BethesdaVsync };
-		inline static REL::Relocation<std::uintptr_t> Present{ AID::LoadScreenPlusLimiterInject, Offsets::PresentInject };
-		inline static REL::Relocation<std::uintptr_t> iSizeW_Patch{ AID::FPS_Cap_Patch1, (REL::Module::get().version() >= F4SE::RUNTIME_LATEST) ? Offsets::iSizeW : 0xB93 };
-		inline static REL::Relocation<std::uintptr_t> iSizeH_Patch{ AID::FPS_Cap_Patch1, (REL::Module::get().version() >= F4SE::RUNTIME_LATEST) ? Offsets::iSizeH : 0xBA1 };
+		inline static REL::Relocation<std::uintptr_t> Present{ AID::PresentThread, Offsets::PresentInject };
+		inline static REL::Relocation<std::uintptr_t> iSizeW_Patch{ AID::FPS_Cap_Patch1, Offsets::iSizeW };
+		inline static REL::Relocation<std::uintptr_t> iSizeH_Patch{ AID::FPS_Cap_Patch1, Offsets::iSizeH };
 		inline static REL::Relocation<int*>           g_extInt{ AID::ExtInt, 0x20 };
 
 		std::vector<presentCallback_t> m_presentCallbacksPre;

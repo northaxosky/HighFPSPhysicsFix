@@ -40,10 +40,10 @@
       }
     },
     {
-      "name": "vs2022",
+      "name": "vs2026",
       "hidden": true,
-      "generator": "Visual Studio 17 2022",
-      "toolset": "v143"
+      "generator": "Visual Studio 18 2026",
+      "toolset": "v145"
     },
     {
       "name": "f4",
@@ -51,20 +51,20 @@
       "binaryDir": "${sourceDir}/build"
     },
     {
-      "name": "vs2022-windows-vcpkg",
+      "name": "vs2026-windows-vcpkg",
       "inherits": [
         "cmake-dev",
         "vcpkg",
         "windows",
-        "vs2022",
+        "vs2026",
         "f4"
       ]
     }
   ],
   "buildPresets": [
     {
-      "name": "vs2022-windows-vcpkg",
-      "configurePreset": "vs2022-windows-vcpkg",
+      "name": "vs2026-windows-vcpkg",
+      "configurePreset": "vs2026-windows-vcpkg",
       "configuration": "Release"
     }
   ]

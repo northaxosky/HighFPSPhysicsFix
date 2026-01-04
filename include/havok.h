@@ -55,6 +55,7 @@ namespace HFPF
 		inline static DWORD_PTR ft4handle;
 
 		static inline std::int32_t                    Magic1 = 0x426b4b44;  //58.8235
+		static inline std::int32_t                    Magic2 = 0xc26b4b44;  //-58.8235
 		inline static REL::Relocation<std::uintptr_t> Untie{ AID::Untie, Offsets::Untie };
 		inline static REL::Relocation<std::uintptr_t> FixStuttering1{ AID::FixStuttering1, Offsets::FixStuttering1 };
 		inline static REL::Relocation<std::uintptr_t> FixStuttering2{ AID::FixStuttering2, Offsets::FixStuttering2 };

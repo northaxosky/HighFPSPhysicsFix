@@ -1,6 +1,6 @@
 {
   "name": "high-fps-physics-fix",
-  "version-string": "0.8.12",
+  "version-string": "0.8.13",
   "description": "",
   "homepage": "",
   "license": "MIT",
@@ -22,8 +22,5 @@
     "srell",
     "xbyak"
   ],
-  "overrides": [
-    {"name":"boost-modular-build-helper","version":"1.84.0#3"}
-  ],
-  "builtin-baseline": "0c20b2a97c390e106150837042d921b0939e7ecb"
+  "builtin-baseline": "af752f21c9d79ba3df9cb0250ce2233933f58486"
 }

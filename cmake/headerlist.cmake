@@ -1,5 +1,6 @@
 set(headers ${headers}
 	include/PCH.h
+	include/OS/SysCall.h
 	include/ext/IErrors.h
 	include/ext/PerfCounter.h
 	include/ext/INIReader.h
@@ -10,14 +11,15 @@ set(headers ${headers}
 	include/data.h
 	include/ext/ID3D11.h
 	include/config.h
-	include/helpers.h
-	include/common.h
-	include/stats.h
-	include/havok.h
-	include/events.h
-	include/render.h
-	include/osd.h
-	include/window.h
-	include/papyrus.h
-	include/misc.h
+    include/helpers.h
+    include/common.h
+    include/stats.h
+    include/havok.h
+    include/events.h
+    include/render.h
+    include/resources.h
+    include/osd.h
+    include/window.h
+    include/papyrus.h
+    include/misc.h
 )

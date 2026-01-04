@@ -25,6 +25,7 @@
 
 #define DLLEXPORT __declspec(dllexport)
 
+#include "OS/SysCall.h"
 #include "ext/ICommon.h"
 #include "ext/IErrors.h"
 #include "ext/ITypes.h"
@@ -73,6 +74,7 @@
 #include "stats.h"
 #include "misc.h"
 #include "osd.h"
+#include "resources.h"
 #include "papyrus.h"
 #include "render.h"
 #include "window.h"
