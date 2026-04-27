@@ -69,21 +69,17 @@ namespace HFPF
 
 	DRender::DRender() :
 		fps_max(0),
-		current_fps_max(0),
 		limiter_installed(false),
 		tearing_enabled(false),
-		has_fl_override(false),
 		fps_limit(-1),
-		m_present_flags(0),
-		oo_expire_time(0),
-		oo_current_fps_max(0),
 		m_limits{},
 		m_dxgiFactory(nullptr),
-		m_swapchain{ 0, 0, 0 },
-		m_vsync_present_interval(0),
-		m_current_vsync_present_interval(0),
-		m_focused(true)
+		m_swapchain{ 0, 0, 0 }
 	{
+		// Tier 2: atomics (current_fps_max, oo_*, has_fl_override, m_focused,
+		// m_*_vsync_present_interval, m_present_flags) are default-initialized
+		// in the header — they cannot appear in the ctor mem-init list because
+		// std::atomic is not copy-initializable from a value.
 		m_swapchain.flags = 0;
 		m_swapchain.width = 0;
 		m_swapchain.height = 0;
@@ -565,7 +561,7 @@ namespace HFPF
 					m_present_flags |= DXGI_PRESENT_ALLOW_TEARING;
 				}
 			} else {
-				m_current_vsync_present_interval = m_vsync_present_interval;
+				m_current_vsync_present_interval.store(m_vsync_present_interval.load(std::memory_order_relaxed), std::memory_order_relaxed);
 				if (tearing_enabled) {
 					m_present_flags &= ~DXGI_PRESENT_ALLOW_TEARING;
 				}
@@ -590,7 +586,7 @@ namespace HFPF
 		}
 
 		if (m_conf.vsync_on) {
-			m_current_vsync_present_interval = m_vsync_present_interval;
+			m_current_vsync_present_interval.store(m_vsync_present_interval.load(std::memory_order_relaxed), std::memory_order_relaxed);
 			if (tearing_enabled) {
 				m_present_flags &= ~DXGI_PRESENT_ALLOW_TEARING;
 			}
@@ -881,7 +877,7 @@ namespace HFPF
 			pSwapChainDesc->BufferDesc.Width,
 			pSwapChainDesc->BufferDesc.Height,
 			GetRefreshRate(pSwapChainDesc),
-			m_vsync_present_interval,
+			m_vsync_present_interval.load(std::memory_order_relaxed),
 			pSwapChainDesc->Windowed);
 
 		logger::info(
@@ -996,14 +992,27 @@ namespace HFPF
 
 	HRESULT STDMETHODCALLTYPE DRender::Present_Hook(
 		IDXGISwapChain4* pSwapChain,
-		UINT             SyncInterval,
-		UINT             PresentFlags)
+		UINT             /*SyncInterval*/,
+		UINT             /*PresentFlags*/)
 	{
+		// Tier 2 (t2-affinity): no explicit g_renderReady gate is required here.
+		// The trampoline that diverts execution into this hook is installed in
+		// DRender::PostInit() AFTER every driver's RegisterHooks() has populated
+		// m_presentCallbacksPre/Post (those run earlier, in driver Initialize).
+		// DMisc's affinity work — Patch_SetThreadsNG() — runs even earlier in
+		// DMisc::Patch(); the runtime SetProcessAffinityMask() calls are deferred
+		// until kNewGame / FaderMenu close, both well after PostInit completes.
+		// Any future tier that introduces dynamic re-installation should bring
+		// back an explicit acquire/release gate, but it MUST NOT fall back to
+		// pSwapChain->Present(SyncInterval, PresentFlags) because the patched
+		// call site mangles those args in its xbyak prologue.
 		for (const auto& f : m_Instance.m_presentCallbacksPre) {
 			f(pSwapChain);
 		}
 
-		HRESULT hr = pSwapChain->Present(m_Instance.m_current_vsync_present_interval, m_Instance.m_present_flags);
+		HRESULT hr = pSwapChain->Present(
+			m_Instance.m_current_vsync_present_interval.load(std::memory_order_relaxed),
+			m_Instance.m_present_flags.load(std::memory_order_relaxed));
 		if (FAILED(hr)) {
 			logger::error("[Render] IDXGISwapChain::Present failed: 0x{:08X}", static_cast<unsigned>(hr));
 		}

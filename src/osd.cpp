@@ -339,12 +339,39 @@ finish:
 		}
 	}
 
+	OSDCallbackHandle StatsRenderer::AddCallback(Callback cb)
+	{
+		// Tier 2: monotonic 64-bit handle source — never reused, so a stale
+		// token from a re-registered function is harmless.
+		static std::atomic<OSDCallbackHandle> s_nextHandle{ 1 };
+		OSDCallbackHandle h = s_nextHandle.fetch_add(1, std::memory_order_relaxed);
+
+		std::unique_lock<std::shared_mutex> _(m_callbacksMutex);
+		m_callbacks.push_back(CallbackEntry{ h, cb });
+		return h;
+	}
+
+	bool StatsRenderer::RemoveCallback(OSDCallbackHandle handle)
+	{
+		std::unique_lock<std::shared_mutex> _(m_callbacksMutex);
+		auto it = std::find_if(m_callbacks.begin(), m_callbacks.end(),
+			[handle](const CallbackEntry& e) { return e.handle == handle; });
+		if (it != m_callbacks.end()) {
+			m_callbacks.erase(it);
+			return true;
+		}
+		return false;
+	}
+
 	void StatsRenderer::UpdateStrings()
 	{
 		std::wostringstream ss;
 
-		for (const auto& f : m_callbacks) {
-			auto buf = f();
+		// Tier 2: shared (read) lock — multiple Present invocations can run
+		// without contention; only register/unregister blocks them.
+		std::shared_lock<std::shared_mutex> _(m_callbacksMutex);
+		for (const auto& e : m_callbacks) {
+			auto buf = e.fn();
 			if (buf != nullptr && buf[0] != 0x0) {
 				ss << buf << std::endl;
 			}

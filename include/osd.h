@@ -5,6 +5,9 @@ namespace HFPF
 	class D3D11CreateEventPost;
 	class DRender;
 
+	using OSDCallbackHandle = std::uint64_t;
+	static constexpr OSDCallbackHandle kInvalidOSDCallbackHandle = 0;
+
 	class SKMP_ALIGN(16) StatsRenderer
 	{
 	public:
@@ -36,23 +39,18 @@ namespace HFPF
 
 		SKMP_FORCEINLINE bool IsLoaded() const { return m_isLoaded; }
 
-		SKMP_FORCEINLINE void AddCallback(Callback cb)
-		{
-			m_callbacks.emplace_back(cb);
-		}
-
-		SKMP_FORCEINLINE bool RemoveCallback(Callback cb)
-		{
-			auto it = std::find(m_callbacks.begin(), m_callbacks.end(), cb);
-			if (it != m_callbacks.end()) {
-				m_callbacks.erase(it);
-				return true;
-			}
-			return false;
-		}
+		// Tier 2 (t2-osd-callbacks): handle-based add/remove. Returns an opaque
+		// token that uniquely identifies the registration; even if the same
+		// function pointer is registered twice, each call gets a distinct
+		// handle and Remove(handle) only deregisters that one. Iteration order
+		// is preserved (FIFO) so the OSD displays callbacks in the order they
+		// were added.
+		OSDCallbackHandle AddCallback(Callback cb);
+		bool              RemoveCallback(OSDCallbackHandle handle);
 
 		SKMP_FORCEINLINE auto GetNumCallbacks() const
 		{
+			std::shared_lock<std::shared_mutex> _(m_callbacksMutex);
 			return m_callbacks.size();
 		}
 
@@ -80,7 +78,18 @@ namespace HFPF
 		except::descriptor m_lastException;
 		bool               m_isLoaded;
 
-		std::vector<Callback> m_callbacks;
+		struct CallbackEntry
+		{
+			OSDCallbackHandle handle;
+			Callback          fn;
+		};
+
+		// Read from Present_Post (render thread); written by AddCallback /
+		// RemoveCallback (typically game-init thread, but keep it
+		// reader/writer safe in case someone wires up dynamic toggling later).
+		std::vector<CallbackEntry> m_callbacks;
+		mutable std::shared_mutex  m_callbacksMutex;
+
 		std::wstring          m_drawString;
 
 		DirectX::XMFLOAT2A   m_offset, m_bufferSize;
@@ -111,11 +120,13 @@ namespace HFPF
 	public:
 		static inline constexpr auto ID = DRIVER_ID::OSD;
 
-		void AddStatsCallback(StatsRenderer::Callback cb)
+		// Tier 2: pass through tokenized handle so callers can unregister later.
+		OSDCallbackHandle AddStatsCallback(StatsRenderer::Callback cb)
 		{
 			if (m_statsRenderer.get() != nullptr) {
-				m_statsRenderer->AddCallback(cb);
+				return m_statsRenderer->AddCallback(cb);
 			}
+			return kInvalidOSDCallbackHandle;
 		}
 
 		struct
@@ -150,12 +161,17 @@ namespace HFPF
 		struct SKMP_ALIGN(16)
 		{
 			//bool loading_screen = true;
-			long long                   lastUpdate;
-			uint64_t                    lastFrameCount, frameCounter;
-			static inline volatile bool draw;
-			volatile std::uint32_t      warmup;
-			std::uint32_t               flags;
-			long long                   interval;
+			long long                       lastUpdate;
+			uint64_t                        lastFrameCount, frameCounter;
+			// Tier 2: written from PostLoadConfig (init thread), read every
+			// Present on the render thread. Atomic so the publish is visible.
+			static inline std::atomic<bool> draw{ false };
+			// Tier 2: written from PostLoadConfig (init) and decremented from
+			// Present_Post (render thread); read from Present_Pre (render
+			// thread). All accesses are now lock-free atomic ops.
+			std::atomic<std::uint32_t>      warmup{ 0 };
+			std::uint32_t                   flags;
+			long long                       interval;
 			struct
 			{
 				DirectX::XMVECTORF32 font;

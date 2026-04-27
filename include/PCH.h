@@ -38,9 +38,12 @@
 #include <ext/stl_containers.h>
 
 #include <algorithm>
+#include <atomic>
 #include <filesystem>
 #include <functional>
 #include <map>
+#include <mutex>
+#include <shared_mutex>
 #include <sstream>
 #include <string>
 #include <unordered_map>

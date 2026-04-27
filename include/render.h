@@ -155,13 +155,20 @@ namespace HFPF
 		static const wchar_t* StatsRendererCallback_LoadTime();
 		static void           OnD3D11PostCreate_LoadTime(Event code, void* data);
 
-		bool loading;
-		bool last;
+		// Tier 2: written from MenuOpenCloseEvent (main UI thread) and read from
+		// the render thread via the OSD load-time callback.
+		std::atomic<bool> loading{ false };
+		std::atomic<bool> last{ false };
 
 		struct SKMP_ALIGN(16)
 		{
-			bool    loading_screen = true;
-			clock_t start, end, timeout;
+			bool                    loading_screen = true;
+			// start/end touched on both UI and render threads (see comments in
+			// render.cpp::ProcessEvent and StatsRendererCallback_LoadTime); timeout
+			// is render-thread-only so it stays a plain clock_t.
+			std::atomic<clock_t>    start{};
+			std::atomic<clock_t>    end{};
+			clock_t                 timeout{};
 
 		} m_stats;
 
@@ -229,10 +236,16 @@ namespace HFPF
 		float     fmt_min;
 		long long fps_max;
 		bool      tearing_enabled;
-		long long current_fps_max, oo_current_fps_max, oo_expire_time;
-		bool      has_fl_override;
+		// Tier 2: framerate-limit override state is mutated from
+		// MenuOpenCloseEvent / TaskInterface (main thread) and read from the
+		// Present hook (render thread). Use atomics so the render thread sees
+		// torn-free updates without taking a lock in the hot path.
+		std::atomic<long long> current_fps_max{ 0 };
+		std::atomic<long long> oo_current_fps_max{ 0 };
+		std::atomic<long long> oo_expire_time{ 0 };
+		std::atomic<bool>      has_fl_override{ false };
 		bool      limiter_installed;
-		bool      m_focused;
+		std::atomic<bool> m_focused{ true };
 
 		struct m_fl
 		{
@@ -256,9 +269,13 @@ namespace HFPF
 			       pSwapChainDesc->SwapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		}
 
-		UINT m_vsync_present_interval;
-		UINT m_current_vsync_present_interval;
-		UINT m_present_flags;
+		// Tier 2: present-hook synchronization-related state. The interval and
+		// flags are written from menu-open/close handlers and Set/Reset
+		// override paths (main thread / task interface) but consumed every
+		// frame on the render thread inside Present_Hook.
+		std::atomic<UINT> m_vsync_present_interval{ 0 };
+		std::atomic<UINT> m_current_vsync_present_interval{ 0 };
+		std::atomic<UINT> m_present_flags{ 0 };
 
 		std::int64_t m_originalResW{ 0 };
 		std::int64_t m_originalResH{ 0 };
