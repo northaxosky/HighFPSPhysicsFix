@@ -79,9 +79,9 @@ target("HighFPSPhysicsFix")
     end)
     set_configvar("CMAKE_CURRENT_SOURCE_DIR", (os.projectdir():gsub("\\", "/")))
     set_configdir("$(builddir)/HighFPSPhysicsFix.gen")
-    add_configfiles("cmake/Version.h.in", { filename = "include/Version.h", pattern = "@(.-)@" })
-    add_configfiles("cmake/version.rc.in", { filename = "version.rc", pattern = "@(.-)@" })
-    add_configfiles("cmake/resources.rc.in", { filename = "resources.rc", pattern = "@(.-)@" })
+    add_configfiles("templates/Version.h.in", { filename = "include/Version.h", pattern = "@(.-)@" })
+    add_configfiles("templates/version.rc.in", { filename = "version.rc", pattern = "@(.-)@" })
+    add_configfiles("templates/resources.rc.in", { filename = "resources.rc", pattern = "@(.-)@" })
     add_includedirs("$(builddir)/HighFPSPhysicsFix.gen/include")
     add_files(
         "$(builddir)/HighFPSPhysicsFix.gen/version.rc",
@@ -127,3 +127,58 @@ target("HighFPSPhysicsFix")
             { force = true, tools = { "link" } }
         )
     end
+
+    -- Post-build deploy: copy DLL + PDB + INI into <deploy_dir>/F4SE/Plugins/.
+    -- Configure with: xmake f --deploy_dir="C:/Games/Modding/.../mods/High FPS Physics Fix"
+    -- Empty (default) skips the deploy step entirely (CI's state).
+    after_build(function (target)
+        local deploy_dir = get_config("deploy_dir")
+        if not deploy_dir or deploy_dir == "" then
+            return
+        end
+        local plugins_dir = path.join(deploy_dir, "F4SE", "Plugins")
+        os.mkdir(plugins_dir)
+        os.cp(target:targetfile(), plugins_dir)
+        local pdb = path.join(target:targetdir(), target:name() .. ".pdb")
+        if os.isfile(pdb) then
+            os.cp(pdb, plugins_dir)
+        end
+        if os.isfile("HighFPSPhysicsFix.ini") then
+            os.cp("HighFPSPhysicsFix.ini", plugins_dir)
+        end
+        cprint("${bright green}deploy: ${clear}copied to %s", plugins_dir)
+    end)
+
+-- Stage a redistributable mod package for CI artifact upload / local zipping.
+-- Layout matches the Nexus / MO2 expectation: <root>/F4SE/Plugins/{dll,pdb,ini}.
+-- Run with: xmake package
+task("package")
+    set_menu({
+        usage = "xmake package",
+        description = "Stage F4SE/Plugins/ mod-package layout under build/package/HighFPSPhysicsFix/",
+    })
+    on_run(function ()
+        import("core.project.project")
+        import("core.base.option")
+        local target = project.target("HighFPSPhysicsFix")
+        if not target then
+            raise("target 'HighFPSPhysicsFix' not found - run `xmake` first")
+        end
+        local dll = target:targetfile()
+        if not os.isfile(dll) then
+            raise("DLL not built: " .. dll .. " - run `xmake` first")
+        end
+        local stage = path.join(os.projectdir(), "build", "package", "HighFPSPhysicsFix")
+        os.tryrm(stage)
+        local plugins_dir = path.join(stage, "F4SE", "Plugins")
+        os.mkdir(plugins_dir)
+        os.cp(dll, plugins_dir)
+        local pdb = path.join(target:targetdir(), target:name() .. ".pdb")
+        if os.isfile(pdb) then
+            os.cp(pdb, plugins_dir)
+        end
+        if os.isfile("HighFPSPhysicsFix.ini") then
+            os.cp("HighFPSPhysicsFix.ini", plugins_dir)
+        end
+        cprint("${bright green}package: ${clear}staged at %s", stage)
+    end)

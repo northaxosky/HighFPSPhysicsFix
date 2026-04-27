@@ -32,7 +32,7 @@ DEPLOYED_DLL    = DEPLOY_DIR / "HighFPSPhysicsFix.dll"
 # DEPLOYED_DLL would be a footgun (it would deploy the currently-installed DLL
 # onto itself, silently re-validating stale bits after a rebuild).
 REPO_ROOT       = Path(__file__).resolve().parent.parent
-BUILT_DLL       = REPO_ROOT / "build" / "Release" / "HighFPSPhysicsFix.dll"
+BUILT_DLL       = REPO_ROOT / "build" / "windows" / "x64" / "releasedbg" / "HighFPSPhysicsFix.dll"
 F4SE_LOG_DIR    = Path.home() / "Documents" / "My Games" / "Fallout4" / "F4SE"
 PLUGIN_LOG      = F4SE_LOG_DIR / "HighFPSPhysicsFix.log"
 
