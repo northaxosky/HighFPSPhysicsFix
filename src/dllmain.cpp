@@ -156,9 +156,9 @@ extern "C" DLLEXPORT constinit auto F4SEPlugin_Version = []() noexcept {
 	data.structureIndependence |= (1u << 1);
 	data.CompatibleVersions({
 		F4SE::RUNTIME_1_10_163,  // OG
-		F4SE::RUNTIME_1_10_984,  // AE (Next-Gen Update point release)
-		F4SE::RUNTIME_1_10_980,  // AE (Next-Gen Update point release)
-		F4SE::RUNTIME_LATEST,    // NG (1.11.191)
+		F4SE::RUNTIME_1_10_980,  // NG (Next-Gen Update)
+		F4SE::RUNTIME_1_10_984,  // NG (Next-Gen Update)
+		F4SE::RUNTIME_LATEST,    // AE (1.11.191)
 	});
 
 	return data;
