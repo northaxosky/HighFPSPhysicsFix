@@ -148,14 +148,9 @@ extern "C" DLLEXPORT constinit auto F4SEPlugin_Version = []() noexcept {
 	data.UsesSigScanning(false);
 	data.IsLayoutDependent(true);
 	data.HasNoStructUse(false);
-	// Dear-Modding's PluginVersionData helpers only set the NG (1.11.137+) bits.
-	// F4SE OG 0.6.23 inspects bit (1<<1) for "address library for 1.10.163" and
-	// the corresponding structureIndependence bit for layout compatibility.
-	// Set those bits explicitly so OG accepts the plugin alongside NG/AE.
-	data.addressIndependence |= (1u << 1);
-	data.structureIndependence |= (1u << 1);
+	// OG (1.10.163) reads F4SEPlugin_Query and ignores PluginVersionData,
+	// so only NG/AE runtimes need to be listed here.
 	data.CompatibleVersions({
-		F4SE::RUNTIME_1_10_163,  // OG
 		F4SE::RUNTIME_1_10_980,  // NG (Next-Gen Update)
 		F4SE::RUNTIME_1_10_984,  // NG (Next-Gen Update)
 		F4SE::RUNTIME_LATEST,    // AE (1.11.191)
