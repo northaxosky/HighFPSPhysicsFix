@@ -26,6 +26,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          # Need full history + tags so CMake's `git describe` resolves the
+          # current version (see CMakeLists.txt PROJECT_VERSION_FROM_GIT).
+          fetch-depth: 0
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2

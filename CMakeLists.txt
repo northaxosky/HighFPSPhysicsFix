@@ -27,11 +27,46 @@ endif ()
 set(Boost_USE_STATIC_RUNTIME OFF CACHE BOOL "")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "")
 
+# ---- Project version (git-derived with tarball fallback) ----
+#
+# Default fallback version, used when:
+#   - git is not available on PATH (tarball builds)
+#   - the source tree is not a git checkout
+#   - `git describe` fails (no tags reachable from HEAD)
+set(FALLBACK_VERSION 0.8.13)
+
+set(PROJECT_VERSION_FROM_GIT "${FALLBACK_VERSION}")
+set(PROJECT_VERSION_DESCRIBE "${FALLBACK_VERSION}")
+
+find_package(Git QUIET)
+if (Git_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+	execute_process(
+		COMMAND "${GIT_EXECUTABLE}" describe --tags --always --dirty --match "[0-9]*"
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		OUTPUT_VARIABLE   GIT_DESCRIBE
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		ERROR_QUIET
+		RESULT_VARIABLE   GIT_DESCRIBE_RESULT
+	)
+	if (GIT_DESCRIBE_RESULT EQUAL 0 AND GIT_DESCRIBE)
+		set(PROJECT_VERSION_DESCRIBE "${GIT_DESCRIBE}")
+		# Extract a strict M.m.p prefix for project(VERSION ...) and the
+		# F4SE PluginVersionData consumer. Anything past the third number
+		# (commit count, sha, "-dirty") is preserved in DESCRIBE for logs
+		# and the resource string.
+		if (GIT_DESCRIBE MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)")
+			set(PROJECT_VERSION_FROM_GIT "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
+		endif ()
+	endif ()
+endif ()
+
+message(STATUS "HighFPSPhysicsFix version: ${PROJECT_VERSION_FROM_GIT} (describe: ${PROJECT_VERSION_DESCRIBE})")
+
 # ---- Project ----
 
 project(
 	HighFPSPhysicsFix
-	VERSION 0.8.13
+	VERSION ${PROJECT_VERSION_FROM_GIT}
 	LANGUAGES CXX RC
 )
 

@@ -174,7 +174,7 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f
 
 	InstallRotatingLogger(logLevel);
 
-	logger::info("{} v{}", Version::PROJECT, Version::NAME);
+	logger::info("{} v{}", Version::PROJECT, Version::DESCRIBE);
 	logger::info("Log level: {}", spdlog::level::to_string_view(logLevel));
 
 	const auto ver = a_f4se->RuntimeVersion();
