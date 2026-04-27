@@ -41,13 +41,42 @@ target("HighFPSPhysicsFix")
         "_SKMP_DISABLE_BOOST_SERIALIZATION"
     )
 
-    -- Generated headers/resources (Phase 4 will swap hardcoded version for git-describe)
+    -- Generated headers/resources. Version values are computed in on_load
+    -- below from `git describe` (with 0.8.13 fallback for tarball builds).
     set_configvar("PROJECT_NAME", "HighFPSPhysicsFix")
     set_configvar("PROJECT_VERSION", "0.8.13")
     set_configvar("PROJECT_VERSION_MAJOR", 0)
     set_configvar("PROJECT_VERSION_MINOR", 8)
     set_configvar("PROJECT_VERSION_PATCH", 13)
     set_configvar("PROJECT_VERSION_DESCRIBE", "0.8.13")
+
+    on_load(function (target)
+        local FALLBACK = "0.8.13"
+        local version = FALLBACK
+        local describe = FALLBACK
+        if os.isdir(".git") then
+            local out
+            try {
+                function ()
+                    out = os.iorun("git describe --tags --always --dirty --match \"[0-9]*\"")
+                end
+            }
+            if out and #out > 0 then
+                describe = out:gsub("%s+$", "")
+                local mj, mn, pt = describe:match("^(%d+)%.(%d+)%.(%d+)")
+                if mj and mn and pt then
+                    version = mj .. "." .. mn .. "." .. pt
+                end
+            end
+        end
+        local mj, mn, pt = version:match("^(%d+)%.(%d+)%.(%d+)")
+        target:set("configvar", "PROJECT_VERSION", version)
+        target:set("configvar", "PROJECT_VERSION_MAJOR", tonumber(mj))
+        target:set("configvar", "PROJECT_VERSION_MINOR", tonumber(mn))
+        target:set("configvar", "PROJECT_VERSION_PATCH", tonumber(pt))
+        target:set("configvar", "PROJECT_VERSION_DESCRIBE", describe)
+        print("HighFPSPhysicsFix version: " .. version .. " (describe: " .. describe .. ")")
+    end)
     set_configvar("CMAKE_CURRENT_SOURCE_DIR", (os.projectdir():gsub("\\", "/")))
     set_configdir("$(builddir)/HighFPSPhysicsFix.gen")
     add_configfiles("cmake/Version.h.in", { filename = "include/Version.h", pattern = "@(.-)@" })
