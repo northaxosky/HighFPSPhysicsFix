@@ -1,5 +1,7 @@
 #include "PCH.h"
 
+#include <xbyak/xbyak.h>
+
 // Tier 0 — xbyak hook bodies (havok.cpp)
 //
 // Several hooks need per-runtime variants because the surrounding compiled

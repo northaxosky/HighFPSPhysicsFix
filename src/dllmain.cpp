@@ -1,5 +1,7 @@
 #include "PCH.h"
 
+#include <xbyak/xbyak.h>
+
 void MessageHandler(F4SE::MessagingInterface::Message* a_message)
 {
 	switch (a_message->type) {

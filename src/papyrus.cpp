@@ -1,4 +1,6 @@
 #include "PCH.h"
+
+#include <xbyak/xbyak.h>
 namespace HFPF
 {
 	static constexpr const char* SECTION_PAPYRUS = "Papyrus";

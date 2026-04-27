@@ -12,14 +12,7 @@
 #include "RE/Fallout.h"
 #include "REX/REX/Singleton.h"
 
-#ifdef NDEBUG
-#	include <spdlog/sinks/basic_file_sink.h>
-#else
-#	include <spdlog/sinks/msvc_sink.h>
-#endif
-
-#include <CLibUtil/simpleINI.hpp>
-#include <CLibUtil/string.hpp>
+#include <spdlog/spdlog.h>
 
 #pragma warning(pop)
 
@@ -29,7 +22,6 @@
 #include "ext/ICommon.h"
 #include "ext/IErrors.h"
 #include "ext/ITypes.h"
-#include <xbyak/xbyak.h>
 
 #include <ext/ID3D11.h>
 #include <ext/IHook.h>
@@ -54,10 +46,6 @@
 #include <dxgi1_6.h>
 #include <shlobj.h>
 #include <wrl/client.h>
-//#include <ini.h>
-
-#include <CommonStates.h>
-#include <SpriteFont.h>
 
 #include "common.h"
 #include "getconfig.h"

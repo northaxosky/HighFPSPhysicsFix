@@ -2,6 +2,10 @@
 #include "Render/FramerateLimiter.h"
 #include "ext/Utility.h"
 
+#include <xbyak/xbyak.h>
+#include <CommonStates.h>
+#include <SpriteFont.h>
+
 using namespace Microsoft::WRL;
 
 namespace HFPF

@@ -1,5 +1,11 @@
 #pragma once
 
+#include <DirectXMath.h>
+#include <DirectXColors.h>
+#include <CommonStates.h>
+#include <SpriteBatch.h>
+#include <SpriteFont.h>
+
 namespace HFPF
 {
 	class D3D11CreateEventPost;
