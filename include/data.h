@@ -6,7 +6,7 @@
 // AIDs use the COMMONLIB_RUNTIMECOUNT=3 triplet form { og, ng, ae }. The NG
 // slot mirrors the AE ID by design: upstream ships a single DLL for both
 // NG and AE point releases and their Address Library IDs are aligned.
-// Slot order ({og, ng, ae}) is confirmed by REL::Module::Runtime
+// Slot order ({og, ng, ae}) is confirmed by REX::FModule::Runtime
 // (kOG=0, kNG=1, kAE=2) in CommonLibF4.
 // Offsets use the RuntimeOffset helper which selects the correct value at
 // runtime from the loaded module.
@@ -152,13 +152,13 @@ namespace HFPF
 		{
 			static constexpr std::uint8_t og[]{ 0xE9, 0x46, 0x02, 0x00, 0x00, 0x90 };
 			static constexpr std::uint8_t ae[]{ 0xE9, 0x6A, 0x03, 0x00, 0x00, 0x90 };
-			return static_cast<std::uint8_t>(REL::Module::GetRuntimeIndex()) == 0 ? og : ae;
+			return static_cast<std::uint8_t>(REX::FModule::GetRuntimeIndex()) == 0 ? og : ae;
 		}
 		static inline const std::uint8_t* ResizeTargetDisable() noexcept
 		{
 			static constexpr std::uint8_t og[]{ 0xE9, 0x4F, 0x01, 0x00, 0x00, 0x90 };
 			static constexpr std::uint8_t ae[]{ 0xE9, 0x3C, 0x01, 0x00, 0x00, 0x90 };
-			return static_cast<std::uint8_t>(REL::Module::GetRuntimeIndex()) == 0 ? og : ae;
+			return static_cast<std::uint8_t>(REX::FModule::GetRuntimeIndex()) == 0 ? og : ae;
 		}
 		static inline constexpr std::size_t ResizeBuffersDisable_size = 6;
 		static inline constexpr std::size_t ResizeTargetDisable_size  = 6;
@@ -172,7 +172,7 @@ namespace HFPF
 		{
 			static constexpr std::uint8_t og[]{ 0xEB, 0x6F, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
 			static constexpr std::uint8_t ae[]{ 0xEB, 0x6C, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-			return static_cast<std::uint8_t>(REL::Module::GetRuntimeIndex()) == 0 ? og : ae;
+			return static_cast<std::uint8_t>(REX::FModule::GetRuntimeIndex()) == 0 ? og : ae;
 		}
 		static inline constexpr std::size_t player_fade_jmp_size = 8;
 	}

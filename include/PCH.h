@@ -10,7 +10,7 @@
 #pragma warning(push)
 #include "F4SE/F4SE.h"
 #include "RE/Fallout.h"
-#include "REX/REX/Singleton.h"
+#include "REX/REX.h"
 
 #include <spdlog/spdlog.h>
 
@@ -72,56 +72,56 @@
 using namespace std::literals;
 
 // Tier 0: Adapt logging to new commonlibf4 API. The old F4SE::log namespace and
-// spdlog wrapper are gone — REX::LOG / REX::INFO / REX::WARN / REX::ERROR /
+// spdlog wrapper are gone — REX::Impl::Log / REX::INFO / REX::WARN / REX::ERROR /
 // REX::CRITICAL replace them. We keep a thin `logger` namespace so existing
 // `logger::info(...)` call sites continue to work without a sweeping rewrite.
 // Note: <wingdi.h> defines ERROR as a macro; undefine it before referencing
-// REX::LOG_LEVEL::ERROR.
+// REX::ELogLevel::Error.
 #ifdef ERROR
 #	undef ERROR
 #endif
 namespace logger
 {
 	template <class... Args>
-	inline void log(REX::LOG_LEVEL level, std::format_string<Args...> fmt, Args&&... args)
+	inline void log(REX::ELogLevel level, std::format_string<Args...> fmt, Args&&... args)
 	{
-		REX::LOG(std::source_location::current(), level, std::vformat(fmt.get(), std::make_format_args(args...)));
+		REX::Impl::Log(std::source_location::current(), level, std::vformat(fmt.get(), std::make_format_args(args...)));
 	}
 
 	template <class... Args>
 	inline void trace(std::format_string<Args...> fmt, Args&&... args)
 	{
-		log(REX::LOG_LEVEL::TRACE, fmt, std::forward<Args>(args)...);
+		log(REX::ELogLevel::Trace, fmt, std::forward<Args>(args)...);
 	}
 
 	template <class... Args>
 	inline void debug(std::format_string<Args...> fmt, Args&&... args)
 	{
-		log(REX::LOG_LEVEL::DEBUG, fmt, std::forward<Args>(args)...);
+		log(REX::ELogLevel::Debug, fmt, std::forward<Args>(args)...);
 	}
 
 	template <class... Args>
 	inline void info(std::format_string<Args...> fmt, Args&&... args)
 	{
-		log(REX::LOG_LEVEL::INFO, fmt, std::forward<Args>(args)...);
+		log(REX::ELogLevel::Info, fmt, std::forward<Args>(args)...);
 	}
 
 	template <class... Args>
 	inline void warn(std::format_string<Args...> fmt, Args&&... args)
 	{
-		log(REX::LOG_LEVEL::WARN, fmt, std::forward<Args>(args)...);
+		log(REX::ELogLevel::Warning, fmt, std::forward<Args>(args)...);
 	}
 
 	template <class... Args>
 	inline void error(std::format_string<Args...> fmt, Args&&... args)
 	{
-		log(REX::LOG_LEVEL::ERROR, fmt, std::forward<Args>(args)...);
+		log(REX::ELogLevel::Error, fmt, std::forward<Args>(args)...);
 	}
 
 	template <class... Args>
 	inline void critical(std::format_string<Args...> fmt, Args&&... args)
 	{
-		log(REX::LOG_LEVEL::CRITICAL, fmt, std::forward<Args>(args)...);
+		log(REX::ELogLevel::Critical, fmt, std::forward<Args>(args)...);
 	}
 }
 
@@ -129,7 +129,7 @@ namespace stl
 {
 	[[noreturn]] inline void report_and_fail(std::string_view a_msg, std::source_location a_loc = std::source_location::current())
 	{
-		REX::IMPL::FAIL(a_loc, a_msg);
+		REX::FAIL<void>(a_loc, a_msg);
 		std::abort();  // unreachable; keeps the [[noreturn]] contract for older toolchains
 	}
 

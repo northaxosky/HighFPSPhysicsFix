@@ -7,7 +7,7 @@
 // Several hooks need per-runtime variants because the surrounding compiled
 // code at the patch site uses different registers / immediate widths between
 // OG (1.10.163) and NG/AE (1.10.984+ / 1.11.x). Per-runtime branching is
-// done at code-gen time via REL::Module::IsRuntimeOG(); NG follows AE.
+// done at code-gen time via REX::FModule::IsRuntimeOG(); NG follows AE.
 //
 // Audited differences (OG vs NG/AE), based on the upstream/1-10-163 source:
 //   FixWhiteScreen safe_fill   : 0x3C bytes (OG) vs 0x35 bytes (NG/AE)
@@ -115,7 +115,7 @@ namespace HFPF
 			Patch_FixStuttering();
 		}
 		if (m_conf.fix_white_screen) {
-			REL::safe_fill(FixWhiteScreen.address(), Payloads::NOP, REL::Module::IsRuntimeOG() ? 0x3C : 0x35);
+			REL::safe_fill(FixWhiteScreen.address(), Payloads::NOP, REX::FModule::IsRuntimeOG() ? 0x3C : 0x35);
 		}
 		if (m_conf.fix_wind_speed) {
 			Patch_FixWindSpeed();
@@ -152,7 +152,7 @@ namespace HFPF
 					Xbyak::Label retnLabel;
 					Xbyak::Label magicLabel;
 
-					if (REL::Module::IsRuntimeOG()) {
+					if (REX::FModule::IsRuntimeOG()) {
 						movss(xmm3, dword[rip + magicLabel]);
 						cvttss2si(rcx, xmm3);
 					} else {
@@ -188,7 +188,7 @@ namespace HFPF
 				{
 					Xbyak::Label retnLabel;
 
-					if (REL::Module::IsRuntimeOG()) {
+					if (REX::FModule::IsRuntimeOG()) {
 						movss(xmm2, xmm6);
 					} else {
 						movss(xmm4, xmm6);
@@ -197,7 +197,7 @@ namespace HFPF
 					jmp(ptr[rip + retnLabel]);
 
 					L(retnLabel);
-					dq(retnAddr + (REL::Module::IsRuntimeOG() ? 0x6 : 0x8));
+					dq(retnAddr + (REX::FModule::IsRuntimeOG() ? 0x6 : 0x8));
 				}
 			};
 			{
@@ -209,13 +209,13 @@ namespace HFPF
 					FixStuttering3.address(),
 					trampoline.allocate(code));
 			}
-			if (REL::Module::IsRuntimeOG()) {
+			if (REX::FModule::IsRuntimeOG()) {
 				REL::safe_write(FixStuttering3.address() + 0x5, &Payloads::NOP, 0x1);
 			} else {
 				REL::safe_write(FixStuttering3.address() + 0x5, &Payloads::NOP3, 0x3);
 			}
 		}
-		if (REL::Module::IsRuntimeOG()) {
+		if (REX::FModule::IsRuntimeOG()) {
 			REL::safe_write(FixStuttering3.address() + 0xE, &Payloads::NOP4, 0x4);
 		} else {
 			REL::safe_write(FixStuttering3.address() + 0x10, &Payloads::NOP8, 0x8);
@@ -410,7 +410,7 @@ namespace HFPF
 					mov(rcx, ptr[rip + timerLabel]);
 					mulss(xmm2, dword[rcx]);
 					L(jmpLabel);
-					if (REL::Module::IsRuntimeOG()) {
+					if (REX::FModule::IsRuntimeOG()) {
 						mulss(xmm2, ptr[rbx + 0x38]);
 					} else {
 						mulss(xmm2, ptr[rdi + 0x38]);
@@ -425,14 +425,14 @@ namespace HFPF
 					dq(a_frameTimer);
 
 					L(forwardLabel);
-					if (REL::Module::IsRuntimeOG()) {
+					if (REX::FModule::IsRuntimeOG()) {
 						dq(uintptr_t(&Magic1));  // 58.8235
 					} else {
 						dd(DHavok::kBits_2_94118);  //  2.94118f
 					}
 
 					L(reverseLabel);
-					if (REL::Module::IsRuntimeOG()) {
+					if (REX::FModule::IsRuntimeOG()) {
 						dq(uintptr_t(&Magic2));  // -58.8235
 					} else {
 						dd(DHavok::kBits_Neg2_94118);  // -2.94118f
@@ -579,7 +579,7 @@ namespace HFPF
 				Xbyak::Label timerLabel;
 
 				mov(rax, ptr[rip + timerLabel]);
-				if (REL::Module::IsRuntimeOG()) {
+				if (REX::FModule::IsRuntimeOG()) {
 					mulss(xmm1, dword[rax]);
 				} else {
 					mulss(xmm0, dword[rax]);
@@ -705,7 +705,7 @@ namespace HFPF
 					Xbyak::Label retnLabel;
 					Xbyak::Label magicLabel;
 
-					if (REL::Module::IsRuntimeOG()) {
+					if (REX::FModule::IsRuntimeOG()) {
 						mov(ecx, ptr[rbx + 0x26C]);
 						movss(xmm8, dword[rip + magicLabel]);
 					} else {

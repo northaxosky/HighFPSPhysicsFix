@@ -87,17 +87,17 @@ namespace
 		}
 	}
 
-	REX::LOG_LEVEL ToRexLevel(spdlog::level::level_enum a_lvl)
+	REX::ELogLevel ToRexLevel(spdlog::level::level_enum a_lvl)
 	{
 		switch (a_lvl) {
-		case spdlog::level::trace:    return REX::LOG_LEVEL::TRACE;
-		case spdlog::level::debug:    return REX::LOG_LEVEL::DEBUG;
-		case spdlog::level::warn:     return REX::LOG_LEVEL::WARN;
-		case spdlog::level::err:      return REX::LOG_LEVEL::ERROR;
-		case spdlog::level::critical: return REX::LOG_LEVEL::CRITICAL;
-		case spdlog::level::off:      return REX::LOG_LEVEL::CRITICAL;
+		case spdlog::level::trace:    return REX::ELogLevel::Trace;
+		case spdlog::level::debug:    return REX::ELogLevel::Debug;
+		case spdlog::level::warn:     return REX::ELogLevel::Warning;
+		case spdlog::level::err:      return REX::ELogLevel::Error;
+		case spdlog::level::critical: return REX::ELogLevel::Critical;
+		case spdlog::level::off:      return REX::ELogLevel::Critical;
 		case spdlog::level::info:
-		default:                      return REX::LOG_LEVEL::INFO;
+		default:                      return REX::ELogLevel::Info;
 		}
 	}
 }
@@ -187,7 +187,7 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f
 	// silently mis-apply. Refuse to install hooks on anything we have not
 	// validated rather than risk a crash in the user's first session.
 	{
-		const auto mver = REL::Module::GetSingleton()->version();
+		const auto mver = REX::FModule::GetExecutingModule().GetFileVersion();
 		const REL::Version k_min{ 1, 10, 163, 0 };
 		const REL::Version k_max_exclusive{ 1, 20, 0, 0 };
 		if (mver < k_min || !(mver < k_max_exclusive)) {
@@ -199,7 +199,7 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f
 		}
 		logger::info("Module version: {} ({})",
 			mver.string(),
-			REL::Module::IsRuntimeOG() ? "OG" : (REL::Module::IsRuntimeNG() ? "NG" : "AE"));
+			REX::FModule::IsRuntimeOG() ? "OG" : (REX::FModule::IsRuntimeNG() ? "NG" : "AE"));
 	}
 
 	const auto messaging = F4SE::GetMessagingInterface();

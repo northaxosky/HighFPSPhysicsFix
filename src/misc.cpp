@@ -48,7 +48,7 @@ namespace HFPF
 				sizeof(Payloads::disable_blackloading_patch));
 		}
 		if (m_conf.disable_loading_screens) {
-			if (REL::Module::IsRuntimeOG()) {
+			if (REX::FModule::IsRuntimeOG()) {
 				REL::safe_write(
 					LoadingScreensAddress.address(),
 					reinterpret_cast<const void*>(Payloads::NOP4),

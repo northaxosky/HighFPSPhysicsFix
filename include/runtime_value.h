@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "REL/Module.h"
+#include "REX/FModule.h"
 
 namespace HFPF
 {
@@ -27,7 +27,7 @@ namespace HFPF
 
 		[[nodiscard]] std::uintptr_t value() const noexcept
 		{
-			const auto idx = static_cast<std::uint8_t>(REL::Module::GetRuntimeIndex());
+			const auto idx = static_cast<std::uint8_t>(REX::FModule::GetRuntimeIndex());
 			switch (idx) {
 			case 0:  return og;
 			case 1:  return ng;
