@@ -6,21 +6,12 @@
   "license": "MIT",
   "dependencies": [
     "boost-serialization",
-    "clib-util",
-    "frozen",
-    "robin-hood-hashing",
-    "fmt",
     "directxtk",
-    "rsm-mmio",
-    "nowide",
-    "catch2",
-    "args",
     {
       "name": "spdlog",
       "features": [ "wchar" ]
     },
-    "srell",
     "xbyak"
   ],
-  "builtin-baseline": "af752f21c9d79ba3df9cb0250ce2233933f58486"
+  "builtin-baseline": "b472291f295551b7127359ea38fdd2ca092f6f1b"
 }

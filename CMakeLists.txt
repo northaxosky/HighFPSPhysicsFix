@@ -104,7 +104,6 @@ configure_file(
 add_subdirectory(extern/CommonLibF4 CommonLibF4 EXCLUDE_FROM_ALL)
 
 find_path(SRELL_INCLUDE_DIRS "srell.hpp")
-find_path(CLIBUTIL_INCLUDE_DIRS "CLibUtil/string.hpp")
 
 find_package(directxtk CONFIG REQUIRED)
 find_package(spdlog REQUIRED CONFIG)
@@ -159,7 +158,6 @@ target_include_directories(
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/include
-		${CLIBUTIL_INCLUDE_DIRS}
 )
 
 target_link_libraries(
