@@ -381,7 +381,7 @@ namespace HFPF
 					std::uintptr_t(&modeDesc));
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<6>(
 					ResizeTarget.address(),
 					trampoline.allocate(code));
@@ -421,7 +421,7 @@ namespace HFPF
 					std::uintptr_t(&m_swapchain));
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<6>(
 					ResizeBuffersInject.address(),
 					trampoline.allocate(code));
@@ -447,7 +447,7 @@ namespace HFPF
 				PatchRax code(MovRaxRcx.address() + 0x6);
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<6>(
 					MovRaxRcx.address(),
 					trampoline.allocate(code));
@@ -459,7 +459,7 @@ namespace HFPF
 	void DRender::RegisterHooks()
 	{
 		if (!Hook::Call5(
-				F4SE::GetTrampoline(),
+				REL::GetTrampoline(),
 				CreateDXGIFactory.address(),
 				reinterpret_cast<std::uintptr_t>(CreateDXGIFactory_Hook),
 				m_createDXGIFactory_O)) {
@@ -467,7 +467,7 @@ namespace HFPF
 		}
 
 		if (!Hook::Call5(
-				F4SE::GetTrampoline(),
+				REL::GetTrampoline(),
 				D3D11CreateDeviceAndSwapChain.address(),
 				reinterpret_cast<std::uintptr_t>(D3D11CreateDeviceAndSwapChain_Hook),
 				m_D3D11CreateDeviceAndSwapChain_O)) {
@@ -504,7 +504,7 @@ namespace HFPF
 			PresentHook code(Present.address());
 			code.ready();
 
-			auto& trampoline = F4SE::GetTrampoline();
+			auto& trampoline = REL::GetTrampoline();
 			trampoline.write_jmp<6>(
 				Present.address(),
 				trampoline.allocate(code));
@@ -537,7 +537,7 @@ namespace HFPF
 		}
 	}
 
-	void DRender::OnConfigLoad(Event m_code, void* args)
+	void DRender::OnConfigLoad([[maybe_unused]] Event m_code, [[maybe_unused]] void* args)
 	{
 		if (m_Instance.m_conf.disable_clamp) {
 			if (*m_Instance.m_gv.iFPSClamp != 0) {
@@ -1171,7 +1171,7 @@ namespace HFPF
 		return m_Instance.bufStats;
 	}
 
-	void DRender::OnD3D11PostCreate_LoadTime(Event code, void* data)
+	void DRender::OnD3D11PostCreate_LoadTime([[maybe_unused]] Event code, [[maybe_unused]] void* data)
 	{
 		m_Instance.m_OSDDriver->AddStatsCallback(StatsRendererCallback_LoadTime);
 	}

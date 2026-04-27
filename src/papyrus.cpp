@@ -79,7 +79,7 @@ namespace HFPF
 				UpdateBudgetInject code(UpdateBudgetGame.address(), m_conf.stats_enabled);
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<6>(
 					UpdateBudgetGame.address(),
 					trampoline.allocate(code));
@@ -92,7 +92,7 @@ namespace HFPF
 			{
 				UpdateBudgetInject code(UpdateBudgetUI.address(), m_conf.stats_enabled);
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<6>(
 					UpdateBudgetUI.address(),
 					trampoline.allocate(code));
@@ -103,7 +103,7 @@ namespace HFPF
 			{
 				UpdateBudgetInject code(UpdateBudget.address(), m_conf.stats_enabled);
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<6>(
 					UpdateBudget.address(),
 					trampoline.allocate(code));

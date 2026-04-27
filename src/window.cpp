@@ -166,7 +166,7 @@ namespace HFPF
 	{
 		if (m_mp.HasProcessors() || m_conf.upscale || m_conf.center_window) {
 			if (!Hook::Call6(
-					F4SE::GetTrampoline(),
+					REL::GetTrampoline(),
 					CreateWindowExAddress.address(),
 					reinterpret_cast<std::uintptr_t>(CreateWindowExA_Hook),
 					m_createWindowExA_O)) {
@@ -178,7 +178,7 @@ namespace HFPF
 
 		if (m_conf.upscale) {
 			if (Hook::Call6(
-					F4SE::GetTrampoline(),
+					REL::GetTrampoline(),
 					UpscaleAddr.address(),
 					reinterpret_cast<std::uintptr_t>(GetClientRect_Hook),
 					m_getClientRect_O)) {
@@ -252,7 +252,7 @@ namespace HFPF
 
 	static bool GetMI(HWND a_windowHandle, bool a_primary, MONITORINFO* a_out)
 	{
-		HMONITOR hMonitor;
+		HMONITOR hMonitor = nullptr;
 		bool     gotHandle(false);
 
 		if (a_primary)

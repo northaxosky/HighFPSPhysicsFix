@@ -7,7 +7,7 @@ namespace HFPF
 	bool IEvents::Initialize()
 	{
 		if (!Hook::Call5(
-				F4SE::GetTrampoline(),
+				REL::GetTrampoline(),
 				LoadPluginINI_C.address(),
 				reinterpret_cast<std::uintptr_t>(PostLoadPluginINI_Hook),
 				m_Instance.LoadPluginINI_O)) {

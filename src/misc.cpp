@@ -91,7 +91,7 @@ namespace HFPF
 					PostLoadPatch code(PostLoadInjectAddress.address(), &m_conf.post_loading_speed, Game::g_frameTimer.address());
 					code.ready();
 
-					auto& trampoline = F4SE::GetTrampoline();
+					auto& trampoline = REL::GetTrampoline();
 					trampoline.write_jmp<5>(
 						PostLoadInjectAddress.address(),
 						trampoline.allocate(code));
@@ -113,7 +113,7 @@ namespace HFPF
 				sizeof(Payloads::loading_patch));
 
 			timing = IPerfCounter::Query();
-			auto& trampoline = F4SE::GetTrampoline();
+			auto& trampoline = REL::GetTrampoline();
 			trampoline.write_call<5>(Present.address(), reinterpret_cast<std::uintptr_t>(ThreadWait));
 			m_conf.max_wait_time = static_cast<long long>((1.0L / 60.0L) * 1000000.0L);
 		}

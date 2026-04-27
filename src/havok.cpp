@@ -173,7 +173,7 @@ namespace HFPF
 				FixStutter1 code(FixStuttering1.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixStuttering1.address(),
 					trampoline.allocate(code));
@@ -203,7 +203,7 @@ namespace HFPF
 				FixStutter2 code(FixStuttering3.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixStuttering3.address(),
 					trampoline.allocate(code));
@@ -243,7 +243,7 @@ namespace HFPF
 				FixStutter3 code(FixObjectsTransfer.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixObjectsTransfer.address(),
 					trampoline.allocate(code));
@@ -279,7 +279,7 @@ namespace HFPF
 				FixWind1 code(FixWindSpeed1.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixWindSpeed1.address(),
 					trampoline.allocate(code));
@@ -311,7 +311,7 @@ namespace HFPF
 				FixWind2 code(FixWindSpeed2.address(), Game::g_frameTimerSlow.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixWindSpeed2.address(),
 					trampoline.allocate(code));
@@ -342,7 +342,7 @@ namespace HFPF
 				FixWind3 code(FixWindSpeed3.address(), Game::g_frameTimerSlow.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixWindSpeed3.address(),
 					trampoline.allocate(code));
@@ -373,7 +373,7 @@ namespace HFPF
 				FixWind4 code(FixWindSpeed4.address(), Game::g_frameTimerSlow.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixWindSpeed4.address(),
 					trampoline.allocate(code));
@@ -443,7 +443,7 @@ namespace HFPF
 				FixRotationSpeed1 code(FixRotationSpeed.address(), Game::g_frameTimer.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixRotationSpeed.address(),
 					trampoline.allocate(code));
@@ -476,7 +476,7 @@ namespace HFPF
 				FixLockpickSpeed code(FixLockpickRotation.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixLockpickRotation.address(),
 					trampoline.allocate(code));
@@ -520,7 +520,7 @@ namespace HFPF
 				FixSitRotationX code(FixSittingRotationX.address(), Game::g_frameTimer.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixSittingRotationX.address(),
 					trampoline.allocate(code));
@@ -559,7 +559,7 @@ namespace HFPF
 				FixSitRotationY code(FixSittingRotationY.address(), Game::g_frameTimer.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixSittingRotationY.address(),
 					trampoline.allocate(code));
@@ -598,7 +598,7 @@ namespace HFPF
 			FixWorkshopRotSpeed code(FixWSRotationSpeed.address(), Game::g_frameTimer.address());
 			code.ready();
 
-			auto& trampoline = F4SE::GetTrampoline();
+			auto& trampoline = REL::GetTrampoline();
 			trampoline.write_jmp<5>(
 				FixWSRotationSpeed.address(),
 				trampoline.allocate(code));
@@ -645,7 +645,7 @@ namespace HFPF
 				FixLoadModelSpeed1 code(FixLeftTriggerZoomSpeed.address(), std::uintptr_t(m_gv.fLoadingModel_TriggerZoomSpeed), Game::g_frameTimer.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixLeftTriggerZoomSpeed.address(),
 					trampoline.allocate(code));
@@ -688,7 +688,7 @@ namespace HFPF
 				FixLoadModelSpeed2 code(FixRightTriggerZoomSpeed.address(), std::uintptr_t(m_gv.fLoadingModel_TriggerZoomSpeed), Game::g_frameTimer.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixRightTriggerZoomSpeed.address(),
 					trampoline.allocate(code));
@@ -725,7 +725,7 @@ namespace HFPF
 				FixLoadModelSpeed3 code(FixRepeateRate.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixRepeateRate.address(),
 					trampoline.allocate(code));
@@ -774,7 +774,7 @@ namespace HFPF
 				FixLoadModelSpeed4 code(FixLoadScreenRotationSpeedUp.address(), std::uintptr_t(m_gv.fLoadingModel_MouseToRotateSpeed), Game::g_frameTimer.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixLoadScreenRotationSpeedUp.address(),
 					trampoline.allocate(code));
@@ -817,7 +817,7 @@ namespace HFPF
 				FixLoadModelSpeed5 code(FixLoadScreenRotationSpeedDown.address(), std::uintptr_t(m_gv.fLoadingModel_MouseToRotateSpeed), Game::g_frameTimer.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixLoadScreenRotationSpeedDown.address(),
 					trampoline.allocate(code));
@@ -860,7 +860,7 @@ namespace HFPF
 				FixLoadModelSpeed6 code(FixLoadScreenRotationSpeedLeft.address(), std::uintptr_t(m_gv.fLoadingModel_MouseToRotateSpeed), Game::g_frameTimer.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixLoadScreenRotationSpeedLeft.address(),
 					trampoline.allocate(code));
@@ -903,7 +903,7 @@ namespace HFPF
 				FixLoadModelSpeed7 code(FixLoadScreenRotationSpeedRight.address(), std::uintptr_t(m_gv.fLoadingModel_MouseToRotateSpeed), Game::g_frameTimer.address());
 				code.ready();
 
-				auto& trampoline = F4SE::GetTrampoline();
+				auto& trampoline = REL::GetTrampoline();
 				trampoline.write_jmp<5>(
 					FixLoadScreenRotationSpeedRight.address(),
 					trampoline.allocate(code));
@@ -938,7 +938,7 @@ namespace HFPF
 			FixStuck code(FixStuckAnim.address());
 			code.ready();
 
-			auto& trampoline = F4SE::GetTrampoline();
+			auto& trampoline = REL::GetTrampoline();
 			trampoline.write_jmp<5>(
 				FixStuckAnim.address(),
 				trampoline.allocate(code));

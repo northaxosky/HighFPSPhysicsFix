@@ -178,24 +178,46 @@ if (MSVC)
 	target_compile_options(
 		${PROJECT_NAME}
 		PRIVATE
-			#/sdl             # Enable Additional Security Checks
-			/utf-8           # Set Source and Executable character sets to UTF-8
-			/Zi              # Debug Information Format
+			/sdl                    # Additional security checks
+			/W4                     # Warning level 4
+			/WX                     # Treat warnings as errors
+			/GS                     # Buffer security check
+			/guard:cf               # Control Flow Guard
+			# /Qspectre             # Deferred: requires VS "Spectre-mitigated libs"
+			#                       # individual component; enable on CI runners
+			#                       # that have it installed.
+			/Brepro                 # Reproducible build (deterministic timestamps)
+			/utf-8                  # Source/exec charset = UTF-8
+			/Zi                     # Debug Information Format
 
-			/permissive-     # Standards conformance
-			/Zc:preprocessor # Enable preprocessor conformance mode
+			/permissive-            # Standards conformance
+			/Zc:preprocessor        # Preprocessor conformance
+			/Zc:__cplusplus         # Report correct __cplusplus value
+			/Zc:throwingNew         # Assume operator new throws
+			/Zc:inline              # Remove unreferenced COMDAT (Release default; safe to keep global)
 
-			/wd4200          # nonstandard extension used : zero-sized array in struct/union
+			/wd4200                 # nonstandard extension: zero-sized array
+			/wd4100                 # unreferenced parameter (Event(code,data)
+			#                       # dispatcher callback signature requires both
+			#                       # args even when handlers ignore them)
+			# Pre-existing warnings deferred to Tier 4 (kept off /WX):
+			#   (none after fixing C4996 deprecations and C4703 hMonitor init
+			#   in this tier; /WX is enabled below).
 
 			"$<$<CONFIG:DEBUG>:>"
-			"$<$<CONFIG:RELEASE>:/Zc:inline;/JMC-;/Ob3>"
+			"$<$<CONFIG:RELEASE>:/JMC-;/Ob3>"
 	)
 
 	target_link_options(
 		${PROJECT_NAME}
 		PRIVATE
-			"$<$<CONFIG:DEBUG>:/INCREMENTAL;/OPT:NOREF;/OPT:NOICF>"
-			"$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF>"
+			/CETCOMPAT
+			/DYNAMICBASE
+			/NXCOMPAT
+			/HIGHENTROPYVA
+			/guard:cf
+			"$<$<CONFIG:DEBUG>:/INCREMENTAL;/DEBUG:FULL;/OPT:NOREF;/OPT:NOICF>"
+			"$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/DEBUG:FULL;/OPT:REF;/OPT:ICF>"
 	)
 endif ()
 
