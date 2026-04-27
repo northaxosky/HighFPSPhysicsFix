@@ -1,7 +1,34 @@
 #include "PCH.h"
 
+// Tier 0 — xbyak hook bodies (havok.cpp)
+//
+// Several hooks need per-runtime variants because the surrounding compiled
+// code at the patch site uses different registers / immediate widths between
+// OG (1.10.163) and NG/AE (1.10.984+ / 1.11.x). Per-runtime branching is
+// done at code-gen time via REL::Module::IsRuntimeOG(); NG follows AE.
+//
+// Audited differences (OG vs NG/AE), based on the upstream/1-10-163 source:
+//   FixWhiteScreen safe_fill   : 0x3C bytes (OG) vs 0x35 bytes (NG/AE)
+//   FixStutter1                : xmm3 (OG) vs xmm5 (NG/AE)
+//   FixStutter2                : xmm2 + retn+0x6, NOP@0x5 / NOP4@0xE
+//                                vs xmm4 + retn+0x8, NOP3@0x5 / NOP8@0x10
+//   FixRotationSpeed1          : ptr[rbx+0x38] + dq(&Magic1/2) (OG) vs
+//                                ptr[rdi+0x38] + dd(constants)  (NG/AE)
+//   FixWSRotation              : mulss xmm1 (OG) vs mulss xmm0 (NG/AE)
+//   FixLoadModelSpeed3         : [rbx+0x26C] + xmm8 (OG) vs
+//                                [rdi+0x26C] + xmm7 (NG/AE)
+
 namespace HFPF
 {
+	// Magic constants used by the OG xbyak FixRotationSpeed1 path. The OG
+	// branch stored these as globals and embedded their addresses into the
+	// generated code via `dq(uintptr_t(MagicN))`; NG/AE inline the values
+	// directly with `dd(0x...)`. Defined as inline 32-bit ints so that
+	// `&Magic1` is a stable address whose lower 32 bits are loaded by the
+	// 4-byte movss in the OG hook body.
+	static inline std::int32_t Magic1 = 0x426b4b44;  // 58.8235f
+	static inline std::int32_t Magic2 = 0xc26b4b44;  // -58.8235f
+
 
 	static constexpr const char* SECTION_MAIN = "Main";
 	static constexpr const char* CKEY_UNTIE = "UntieSpeedFromFPS";
@@ -74,7 +101,7 @@ namespace HFPF
 			Patch_FixStuttering();
 		}
 		if (m_conf.fix_white_screen) {
-			REL::safe_fill(FixWhiteScreen.address(), Payloads::NOP, 0x35);
+			REL::safe_fill(FixWhiteScreen.address(), Payloads::NOP, REL::Module::IsRuntimeOG() ? 0x3C : 0x35);
 		}
 		if (m_conf.fix_wind_speed) {
 			Patch_FixWindSpeed();
@@ -111,8 +138,13 @@ namespace HFPF
 					Xbyak::Label retnLabel;
 					Xbyak::Label magicLabel;
 
-					movss(xmm5, dword[rip + magicLabel]);
-					cvttss2si(rcx, xmm5);
+					if (REL::Module::IsRuntimeOG()) {
+						movss(xmm3, dword[rip + magicLabel]);
+						cvttss2si(rcx, xmm3);
+					} else {
+						movss(xmm5, dword[rip + magicLabel]);
+						cvttss2si(rcx, xmm5);
+					}
 
 					jmp(ptr[rip + retnLabel]);
 
@@ -129,7 +161,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixStuttering1.address(),
 					trampoline.allocate(code));
 			}
@@ -142,12 +174,16 @@ namespace HFPF
 				{
 					Xbyak::Label retnLabel;
 
-					movss(xmm4, xmm6);
+					if (REL::Module::IsRuntimeOG()) {
+						movss(xmm2, xmm6);
+					} else {
+						movss(xmm4, xmm6);
+					}
 
 					jmp(ptr[rip + retnLabel]);
 
 					L(retnLabel);
-					dq(retnAddr + 0x8);
+					dq(retnAddr + (REL::Module::IsRuntimeOG() ? 0x6 : 0x8));
 				}
 			};
 			{
@@ -155,13 +191,21 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixStuttering3.address(),
 					trampoline.allocate(code));
 			}
-			REL::safe_write(FixStuttering3.address() + 0x5, &Payloads::NOP3, 0x3);
+			if (REL::Module::IsRuntimeOG()) {
+				REL::safe_write(FixStuttering3.address() + 0x5, &Payloads::NOP, 0x1);
+			} else {
+				REL::safe_write(FixStuttering3.address() + 0x5, &Payloads::NOP3, 0x3);
+			}
 		}
-		REL::safe_write(FixStuttering3.address() + 0x10, &Payloads::NOP8, 0x8);
+		if (REL::Module::IsRuntimeOG()) {
+			REL::safe_write(FixStuttering3.address() + 0xE, &Payloads::NOP4, 0x4);
+		} else {
+			REL::safe_write(FixStuttering3.address() + 0x10, &Payloads::NOP8, 0x8);
+		}
 		{
 			//fix moving objects
 			struct FixStutter3 : Xbyak::CodeGenerator
@@ -187,7 +231,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixObjectsTransfer.address(),
 					trampoline.allocate(code));
 			}
@@ -223,7 +267,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixWindSpeed1.address(),
 					trampoline.allocate(code));
 			}
@@ -255,7 +299,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixWindSpeed2.address(),
 					trampoline.allocate(code));
 			}
@@ -286,7 +330,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixWindSpeed3.address(),
 					trampoline.allocate(code));
 			}
@@ -317,7 +361,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixWindSpeed4.address(),
 					trampoline.allocate(code));
 			}
@@ -352,7 +396,11 @@ namespace HFPF
 					mov(rcx, ptr[rip + timerLabel]);
 					mulss(xmm2, dword[rcx]);
 					L(jmpLabel);
-					mulss(xmm2, ptr[rdi + 0x38]);
+					if (REL::Module::IsRuntimeOG()) {
+						mulss(xmm2, ptr[rbx + 0x38]);
+					} else {
+						mulss(xmm2, ptr[rdi + 0x38]);
+					}
 
 					jmp(ptr[rip + retnLabel]);
 
@@ -363,10 +411,18 @@ namespace HFPF
 					dq(a_frameTimer);
 
 					L(forwardLabel);
-					dd(0x403c3c3c);  // 2.94118
+					if (REL::Module::IsRuntimeOG()) {
+						dq(uintptr_t(&Magic1));  // 58.8235
+					} else {
+						dd(0x403c3c3c);  // 2.94118
+					}
 
 					L(reverseLabel);
-					dd(0xc03c3c4b);  // -2.94118
+					if (REL::Module::IsRuntimeOG()) {
+						dq(uintptr_t(&Magic2));  // -58.8235
+					} else {
+						dd(0xc03c3c4b);  // -2.94118
+					}
 				}
 			};
 			logger::info("[Havok] [Patch] [Fix rotation speed] patching...");
@@ -375,7 +431,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixRotationSpeed.address(),
 					trampoline.allocate(code));
 			}
@@ -408,7 +464,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixLockpickRotation.address(),
 					trampoline.allocate(code));
 			}
@@ -452,7 +508,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixSittingRotationX.address(),
 					trampoline.allocate(code));
 			}
@@ -491,7 +547,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixSittingRotationY.address(),
 					trampoline.allocate(code));
 			}
@@ -509,7 +565,11 @@ namespace HFPF
 				Xbyak::Label timerLabel;
 
 				mov(rax, ptr[rip + timerLabel]);
-				mulss(xmm0, dword[rax]);
+				if (REL::Module::IsRuntimeOG()) {
+					mulss(xmm1, dword[rax]);
+				} else {
+					mulss(xmm0, dword[rax]);
+				}
 
 				jmp(ptr[rip + retnLabel]);
 
@@ -526,7 +586,7 @@ namespace HFPF
 			code.ready();
 
 			auto& trampoline = F4SE::GetTrampoline();
-			trampoline.write_branch<5>(
+			trampoline.write_jmp<5>(
 				FixWSRotationSpeed.address(),
 				trampoline.allocate(code));
 		}
@@ -573,7 +633,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixLeftTriggerZoomSpeed.address(),
 					trampoline.allocate(code));
 			}
@@ -616,7 +676,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixRightTriggerZoomSpeed.address(),
 					trampoline.allocate(code));
 			}
@@ -631,8 +691,12 @@ namespace HFPF
 					Xbyak::Label retnLabel;
 					Xbyak::Label magicLabel;
 
-					mov(ecx, ptr[rdi + 0x26C]);
-					movss(xmm7, dword[rip + magicLabel]);
+					mov(ecx, ptr[(REL::Module::IsRuntimeOG() ? rbx : rdi) + 0x26C]);
+					if (REL::Module::IsRuntimeOG()) {
+						movss(xmm8, dword[rip + magicLabel]);
+					} else {
+						movss(xmm7, dword[rip + magicLabel]);
+					}
 
 					jmp(ptr[rip + retnLabel]);
 
@@ -648,7 +712,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixRepeateRate.address(),
 					trampoline.allocate(code));
 			}
@@ -697,7 +761,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixLoadScreenRotationSpeedUp.address(),
 					trampoline.allocate(code));
 			}
@@ -740,7 +804,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixLoadScreenRotationSpeedDown.address(),
 					trampoline.allocate(code));
 			}
@@ -783,7 +847,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixLoadScreenRotationSpeedLeft.address(),
 					trampoline.allocate(code));
 			}
@@ -826,7 +890,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<5>(
+				trampoline.write_jmp<5>(
 					FixLoadScreenRotationSpeedRight.address(),
 					trampoline.allocate(code));
 			}
@@ -861,7 +925,7 @@ namespace HFPF
 			code.ready();
 
 			auto& trampoline = F4SE::GetTrampoline();
-			trampoline.write_branch<5>(
+			trampoline.write_jmp<5>(
 				FixStuckAnim.address(),
 				trampoline.allocate(code));
 		}

@@ -14,7 +14,6 @@ endmacro()
 
 set_from_environment(Fallout4Path)
 set_from_environment(VCPKG_ROOT)
-set_from_environment(CommonLibF4Path)
 
 if (DEFINED VCPKG_ROOT)
 	set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
@@ -69,6 +68,7 @@ endif ()
 
 add_compile_definitions(
 	F4SE_SUPPORT_XBYAK
+	COMMONLIB_RUNTIMECOUNT=3
 )
 
 if (MSVC)
@@ -86,14 +86,22 @@ set(Boost_USE_STATIC_LIBS ON)
 
 # ---- Dependencies ----
 
-if (DEFINED CommonLibF4Path AND NOT ${CommonLibF4Path} STREQUAL "" AND IS_DIRECTORY ${CommonLibF4Path})
-	add_subdirectory(${CommonLibF4Path} CommonLibF4)
-else ()
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/CommonLibF4/include/F4SE/F4SE.h")
 	message(
 		FATAL_ERROR
-		"Variable CommonLibF4Path is not set."
+		"CommonLibF4 submodule missing. Run: git submodule update --init --recursive"
 	)
 endif ()
+# Upstream Dear-Modding-FO4/commonlibf4 removed its CMakeLists.txt (commit 6d240381)
+# in favor of xmake. We vendor a CMake build wrapper into the submodule at configure
+# time so the existing CMake build keeps working. The wrapper lives at
+# cmake/CommonLibF4-CMakeLists.txt and is the same one used by FO4Upscaling.
+configure_file(
+	${CMAKE_CURRENT_SOURCE_DIR}/cmake/CommonLibF4-CMakeLists.txt
+	${CMAKE_CURRENT_SOURCE_DIR}/extern/CommonLibF4/CMakeLists.txt
+	COPYONLY
+)
+add_subdirectory(extern/CommonLibF4 CommonLibF4 EXCLUDE_FROM_ALL)
 
 find_path(SRELL_INCLUDE_DIRS "srell.hpp")
 find_path(CLIBUTIL_INCLUDE_DIRS "CLibUtil/string.hpp")

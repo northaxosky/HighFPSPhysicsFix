@@ -84,7 +84,7 @@ namespace HFPF
 					code.ready();
 
 					auto& trampoline = F4SE::GetTrampoline();
-					trampoline.write_branch<5>(
+					trampoline.write_jmp<5>(
 						PostLoadInjectAddress.address(),
 						trampoline.allocate(code));
 				}
@@ -117,7 +117,7 @@ namespace HFPF
 		}
 
 		if (m_conf.disable_player_fade) {
-			REL::safe_write(PlayerFade_a.address(), &Payloads::player_fade_jmp, sizeof(Payloads::player_fade_jmp));
+			REL::safe_write(PlayerFade_a.address(), Payloads::player_fade_jmp(), Payloads::player_fade_jmp_size);
 			logger::info("[Miscellaneous] Player fade patch applied");
 		}
 

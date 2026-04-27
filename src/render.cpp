@@ -304,16 +304,16 @@ namespace HFPF
 			if (m_conf.disablebufferresize) {
 				REL::safe_write(
 					ResizeBuffersDisable.address(),
-					reinterpret_cast<const void*>(Payloads::ResizeBuffersDisable),
-					sizeof(Payloads::ResizeBuffersDisable));
+					reinterpret_cast<const void*>(Payloads::ResizeBuffersDisable()),
+					Payloads::ResizeBuffersDisable_size);
 				logger::info("[Render] Disabled swap chain buffer resizing");
 			}
 
 			if (m_conf.disabletargetresize) {
 				REL::safe_write(
 					ResizeTargetDisable.address(),
-					reinterpret_cast<const void*>(Payloads::ResizeTargetDisable),
-					sizeof(Payloads::ResizeTargetDisable));
+					reinterpret_cast<const void*>(Payloads::ResizeTargetDisable()),
+					Payloads::ResizeTargetDisable_size);
 
 				logger::info("[Render] [Patch] Disabled swap chain target resizing");
 			}
@@ -382,7 +382,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<6>(
+				trampoline.write_jmp<6>(
 					ResizeTarget.address(),
 					trampoline.allocate(code));
 			}
@@ -422,7 +422,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<6>(
+				trampoline.write_jmp<6>(
 					ResizeBuffersInject.address(),
 					trampoline.allocate(code));
 			}
@@ -448,7 +448,7 @@ namespace HFPF
 				code.ready();
 
 				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_branch<6>(
+				trampoline.write_jmp<6>(
 					MovRaxRcx.address(),
 					trampoline.allocate(code));
 			}
@@ -505,7 +505,7 @@ namespace HFPF
 			code.ready();
 
 			auto& trampoline = F4SE::GetTrampoline();
-			trampoline.write_branch<6>(
+			trampoline.write_jmp<6>(
 				Present.address(),
 				trampoline.allocate(code));
 		}

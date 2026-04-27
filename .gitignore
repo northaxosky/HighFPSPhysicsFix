@@ -1,2 +1,10 @@
 build*/
 /.vs
+/.vscode
+/.local
+/.claude
+CLAUDE.md
+*.user
+test-results/
+
+extern/CommonLibF4/CMakeLists.txt

@@ -117,7 +117,7 @@ namespace Hook
 			a_orig = reinterpret_cast<T>(o);
 		}
 
-		a_trampoline.write_branch<5>(a_addr, a_dst);
+		a_trampoline.write_jmp<5>(a_addr, a_dst);
 
 		return true;
 	}
@@ -166,7 +166,7 @@ namespace Hook
 			a_orig = reinterpret_cast<T>(o);
 		}
 
-		a_trampoline.write_branch<6>(a_addr, a_dst);
+		a_trampoline.write_jmp<6>(a_addr, a_dst);
 
 		return true;
 	}
