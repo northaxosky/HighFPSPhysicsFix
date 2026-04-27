@@ -3,60 +3,62 @@
 #include "runtime_value.h"
 
 // Multi-runtime address table for OG (1.10.163), NG (1.10.984), AE (1.11.x).
-// AIDs use the COMMONLIB_RUNTIMECOUNT=3 triplet form { og, ng, ae } (when only
-// 2 are supplied, the AE value also covers NG, matching upstream's per-DLL split
-// where the NG and AE DLLs shared sources). Offsets use the RuntimeOffset helper
-// which selects the correct value at runtime from the loaded module.
+// AIDs use the COMMONLIB_RUNTIMECOUNT=3 triplet form { og, ng, ae }. The NG slot
+// is currently a placeholder copy of the OG ID and must be revalidated against
+// version-1-10-984-0.bin before claiming NG support (see TODO: NG ID below).
+// Offsets use the RuntimeOffset helper which selects the correct value at
+// runtime from the loaded module.
 
 namespace HFPF
 {
 	namespace AID
 	{
-		// Sourced from upstream/master (AE) and upstream/1-10-163 (OG) branches.
-		// NG slot mirrors AE per upstream design.
-		constexpr REL::ID FPS_Cap_Patch1                 { 133902,  2228907 };
-		constexpr REL::ID FullScreen_Patch1              { 1547437, 2227231 };
+		// OG values sourced from upstream/1-10-163:include/data.h.
+		// AE values sourced from upstream/master:include/data.h.
+		// NG slot is a placeholder = OG until validated against the NG bin. // TODO: NG ID
+		constexpr REL::ID FPS_Cap_Patch1                 { 133902,  133902  /* TODO: NG ID */, 2228907 };
+		constexpr REL::ID FullScreen_Patch1              { 1547437, 1547437 /* TODO: NG ID */, 2227231 };
 		// AE has standalone MovRaxRcx AID; OG inlines it inside ResizeBuffers.
-		constexpr REL::ID MovRaxRcx                      { 212827,  2276824 };
-		constexpr REL::ID ResizeTarget                   { 796949,  2276825 };
+		constexpr REL::ID MovRaxRcx                      { 212827,  212827  /* TODO: NG ID */, 2276824 };
+		constexpr REL::ID ResizeTarget                   { 796949,  796949  /* TODO: NG ID */, 2276825 };
 		// AE has standalone CreateDXGIFactory AID; OG uses D3D11Create as the parent symbol.
-		constexpr REL::ID CreateDXGIFactory              { 224250,  4492363 };
-		constexpr REL::ID FrameTimer                     { 922988,  4803789 };
-		constexpr REL::ID CreateWindowEx_a               { 193854,  2276814 };
-		constexpr REL::ID BlackLoadingScreens            { 991513,  2249217 };
-		constexpr REL::ID LoadingScreens                 { 132841,  2227631 };
-		constexpr REL::ID PostLoadInject                 { 1289136, 2248711 };
-		constexpr REL::ID PresentThread                  { 700869,  2276834 };
-		constexpr REL::ID Untie                          { 462873,  2267969 };
-		constexpr REL::ID ExtInt                         { 359440,  359440  };
-		constexpr REL::ID FixStuttering1                 { 12890,   2277709 };
-		constexpr REL::ID FixStuttering2                 { 1395106, 2277710 };
-		constexpr REL::ID ObjectsTransfer                { 754666,  2255886 };
-		constexpr REL::ID FixWhiteScreen                 { 703643,  2258401 };
-		constexpr REL::ID FixWindSpeed1                  { 1469635, 2278751 };
-		constexpr REL::ID FixWindSpeed2                  { 1164603, 2277711 };
-		constexpr REL::ID FixRotationSpeed               { 457276,  2234879 };
-		constexpr REL::ID FixLockpickRotation            { 676000,  2249260 };
-		constexpr REL::ID FixWSRotationSpeed             { 1144472, 2195211 };
-		constexpr REL::ID FixRepeateRate                 { 618896,  2249218 };
+		constexpr REL::ID CreateDXGIFactory              { 224250,  224250  /* TODO: NG ID */, 4492363 };
+		constexpr REL::ID FrameTimer                     { 922988,  922988  /* TODO: NG ID */, 4803789 };
+		constexpr REL::ID CreateWindowEx_a               { 193854,  193854  /* TODO: NG ID */, 2276814 };
+		constexpr REL::ID BlackLoadingScreens            { 991513,  991513  /* TODO: NG ID */, 2249217 };
+		constexpr REL::ID LoadingScreens                 { 132841,  132841  /* TODO: NG ID */, 2227631 };
+		constexpr REL::ID PostLoadInject                 { 1289136, 1289136 /* TODO: NG ID */, 2248711 };
+		constexpr REL::ID PresentThread                  { 700869,  700869  /* TODO: NG ID */, 2276834 };
+		constexpr REL::ID Untie                          { 462873,  462873  /* TODO: NG ID */, 2267969 };
+		constexpr REL::ID ExtInt                         { 359440,  359440  /* TODO: NG ID */, 359440  };
+		constexpr REL::ID FixStuttering1                 { 12890,   12890   /* TODO: NG ID */, 2277709 };
+		constexpr REL::ID FixStuttering2                 { 1395106, 1395106 /* TODO: NG ID */, 2277710 };
+		constexpr REL::ID ObjectsTransfer                { 754666,  754666  /* TODO: NG ID */, 2255886 };
+		constexpr REL::ID FixWhiteScreen                 { 703643,  703643  /* TODO: NG ID */, 2258401 };
+		constexpr REL::ID FixWindSpeed1                  { 1469635, 1469635 /* TODO: NG ID */, 2278751 };
+		constexpr REL::ID FixWindSpeed2                  { 1164603, 1164603 /* TODO: NG ID */, 2277711 };
+		constexpr REL::ID FixRotationSpeed               { 457276,  457276  /* TODO: NG ID */, 2234879 };
+		constexpr REL::ID FixLockpickRotation            { 676000,  676000  /* TODO: NG ID */, 2249260 };
+		constexpr REL::ID FixWSRotationSpeed             { 1144472, 1144472 /* TODO: NG ID */, 2195211 };
+		constexpr REL::ID FixRepeateRate                 { 618896,  618896  /* TODO: NG ID */, 2249218 };
 		// OG branch named this FixTriggerZoomSpeed (one trigger handles both); AE split into Left/Right.
-		constexpr REL::ID FixLeftTriggerZoomSpeed        { 629736,  2249220 };
-		constexpr REL::ID FixLoadScreenRotationSpeed     { 22234,   2249233 };
-		constexpr REL::ID FixStuckAnim                   { 463133,  2302542 };
-		constexpr REL::ID FixMotionFeedback              { 1201084, 2196089 };
-		constexpr REL::ID FixSittingRotationX            { 533372,  2248271 };
-		constexpr REL::ID Upscale                        { 288964,  2276833 };
-		constexpr REL::ID ActorFade                      { 295466,  2214659 };
-		constexpr REL::ID PlayerFade                     { 202079,  2248393 };
-		constexpr REL::ID BudgetGame                     { 759508,  2251303 };
-		constexpr REL::ID BudgetUI                       { 1343068, 2251305 };
-		constexpr REL::ID Budget                         { 890788,  2251306 };
+		constexpr REL::ID FixLeftTriggerZoomSpeed        { 629736,  629736  /* TODO: NG ID */, 2249220 };
+		constexpr REL::ID FixLoadScreenRotationSpeed     { 22234,   22234   /* TODO: NG ID */, 2249233 };
+		constexpr REL::ID FixStuckAnim                   { 463133,  463133  /* TODO: NG ID */, 2302542 };
+		constexpr REL::ID FixMotionFeedback              { 1201084, 1201084 /* TODO: NG ID */, 2196089 };
+		constexpr REL::ID FixSittingRotationX            { 533372,  533372  /* TODO: NG ID */, 2248271 };
+		constexpr REL::ID Upscale                        { 288964,  288964  /* TODO: NG ID */, 2276833 };
+		constexpr REL::ID ActorFade                      { 295466,  295466  /* TODO: NG ID */, 2214659 };
+		constexpr REL::ID PlayerFade                     { 202079,  202079  /* TODO: NG ID */, 2248393 };
+		constexpr REL::ID BudgetGame                     { 759508,  759508  /* TODO: NG ID */, 2251303 };
+		constexpr REL::ID BudgetUI                       { 1343068, 1343068 /* TODO: NG ID */, 2251305 };
+		constexpr REL::ID Budget                         { 890788,  890788  /* TODO: NG ID */, 2251306 };
 		// OG branch names this Write_iLocationX (single AID for both X/Y axes).
-		constexpr REL::ID Write_iLocation                { 719782,  8695006 };
+		constexpr REL::ID Write_iLocation                { 719782,  719782  /* TODO: NG ID */, 8695006 };
 		// Hook target for plugin INI loading. OG and AE use different parent symbols
 		// (OG: LoadPluginINI_C function; AE: FPS_Cap_Patch1 + 0x631) but resolve to the
 		// same absolute address. Pair with Offsets::LoadPluginINI_C below.
-		constexpr REL::ID LoadPluginINI_C                { 1266784, 2228907 };
+		constexpr REL::ID LoadPluginINI_C                { 1266784, 1266784 /* TODO: NG ID */, 2228907 };
 	}
 
 	namespace Offsets
