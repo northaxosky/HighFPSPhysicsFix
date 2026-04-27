@@ -1017,8 +1017,17 @@ namespace HFPF
 		HRESULT hr = pSwapChain->Present(
 			m_Instance.m_current_vsync_present_interval.load(std::memory_order_relaxed),
 			m_Instance.m_present_flags.load(std::memory_order_relaxed));
-		if (FAILED(hr)) {
-			logger::error("[Render] IDXGISwapChain::Present failed: 0x{:08X}", static_cast<unsigned>(hr));
+		if (FAILED(hr)) [[unlikely]] {
+			// Rate-limit to avoid flooding the log (and synchronous disk I/O on the
+			// render thread) when the device is in a sustained failure state — e.g.
+			// DXGI_ERROR_DEVICE_REMOVED after a long alt-tab or driver reset.
+			static std::atomic<long long> s_lastLogQpc{ 0 };
+			const long long               now = IPerfCounter::Query();
+			const long long               last = s_lastLogQpc.load(std::memory_order_relaxed);
+			if (last == 0 || IPerfCounter::delta_us(last, now) >= 1'000'000) {
+				s_lastLogQpc.store(now, std::memory_order_relaxed);
+				logger::error("[Render] IDXGISwapChain::Present failed: 0x{:08X}", static_cast<unsigned>(hr));
+			}
 		}
 
 		for (const auto& f : m_Instance.m_presentCallbacksPost) {
