@@ -14,12 +14,9 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
-
 jobs:
   build:
-    name: Build (Release / x64)
+    name: Build (releasedbg / x64)
     runs-on: windows-latest
 
     steps:
@@ -27,37 +24,32 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          # Need full history + tags so CMake's `git describe` resolves the
-          # current version (see CMakeLists.txt PROJECT_VERSION_FROM_GIT).
+          # Need full history + tags so xmake.lua's `git describe` resolves
+          # the current version (see PROJECT_VERSION_DESCRIBE in xmake.lua).
           fetch-depth: 0
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Export GitHub Actions cache env (vcpkg)
-        uses: actions/github-script@v7
+      - name: Setup xmake
+        uses: xmake-io/github-action-setup-xmake@v1
         with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+          xmake-version: latest
 
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
+      - name: Cache xmake packages
+        uses: actions/cache@v4
         with:
-          vcpkgGitCommitId: 'b472291f295551b7127359ea38fdd2ca092f6f1b'
+          path: ~/AppData/Local/.xmake/packages
+          key: xmake-${{ runner.os }}-${{ hashFiles('xmake.lua', 'extern/CommonLibF4/xmake.lua', 'extern/CommonLibF4/lib/commonlib-shared/xmake.lua') }}
+          restore-keys: xmake-${{ runner.os }}-
 
       - name: Configure
-        env:
-          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: cmake --preset vs2022-windows-vcpkg
+        run: xmake f -m releasedbg -y
 
-      - name: Build (Release)
-        run: cmake --build build --config Release
+      - name: Build
+        run: xmake -j 8 -v
 
       - name: clang-format check (advisory)
         # The repo already ships a .clang-format. We run a dry-run check for
-        # signal but do NOT fail the build on diffs (Tier 3: format gate is
-        # opt-in until existing code is reformatted in a dedicated commit).
+        # signal but do NOT fail the build on diffs (format gate is opt-in
+        # until existing code is reformatted in a dedicated commit).
         continue-on-error: true
         shell: pwsh
         run: |
@@ -67,20 +59,13 @@ jobs:
           }
 
       - name: Stage mod package
-        shell: pwsh
-        run: |
-          $pkg = "package/HighFPSPhysicsFix"
-          New-Item -ItemType Directory -Force -Path "$pkg/F4SE/Plugins" | Out-Null
-          Copy-Item "build/Release/HighFPSPhysicsFix.dll" "$pkg/F4SE/Plugins/"
-          Copy-Item "build/Release/HighFPSPhysicsFix.pdb" "$pkg/F4SE/Plugins/"
-          Copy-Item "HighFPSPhysicsFix.ini"               "$pkg/F4SE/Plugins/"
-          Get-ChildItem -Recurse $pkg
+        run: xmake package
 
       - name: Upload mod package (drop into MO2 / Data)
         uses: actions/upload-artifact@v4
         with:
           name: HighFPSPhysicsFix-mod-${{ github.sha }}
-          path: package/HighFPSPhysicsFix/**
+          path: build/package/HighFPSPhysicsFix/**
           if-no-files-found: error
 
       - name: Package release zip
@@ -89,7 +74,7 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}"
           $zip = "HighFPSPhysicsFix-$tag.zip"
-          Compress-Archive -Path "package/HighFPSPhysicsFix/F4SE" -DestinationPath $zip -Force
+          Compress-Archive -Path "build/package/HighFPSPhysicsFix/F4SE" -DestinationPath $zip -Force
           "ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Create GitHub Release
