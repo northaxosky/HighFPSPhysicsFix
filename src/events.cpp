@@ -11,8 +11,15 @@ namespace HFPF
 				LoadPluginINI_C.address(),
 				reinterpret_cast<std::uintptr_t>(PostLoadPluginINI_Hook),
 				m_Instance.LoadPluginINI_O)) {
-			logger::critical("[Events] Could not install event hooks");
-			return false;
+			// Non-fatal: this hook target's address is not currently validated
+			// for every runtime (notably AE 1.11.x). Without this hook the
+			// OnConfigLoad event will not fire from the game side, which
+			// affects late-binding renderer reconfiguration but does not
+			// break core physics/havok patches. Returning false here would
+			// cause F4SE to mark the plugin as incompatible and skip it
+			// entirely, so log and continue instead.
+			logger::warn("[Events] Could not install LoadPluginINI hook on this runtime - continuing without OnConfigLoad event");
+			return true;
 		}
 
 		logger::info("[Events] Installed event hooks");
