@@ -163,12 +163,13 @@ namespace HFPF
 		struct SKMP_ALIGN(16)
 		{
 			bool                    loading_screen = true;
-			// start/end touched on both UI and render threads (see comments in
-			// render.cpp::ProcessEvent and StatsRendererCallback_LoadTime); timeout
-			// is render-thread-only so it stays a plain clock_t.
-			std::atomic<clock_t>    start{};
-			std::atomic<clock_t>    end{};
-			clock_t                 timeout{};
+			// Tier 4: timestamps are QPC ticks (IPerfCounter::Query); converted
+			// to seconds via IPerfCounter::delta<double>(start, end). Touched
+			// from both the UI and render threads — see comments in
+			// render.cpp::ProcessEvent and StatsRendererCallback_LoadTime.
+			std::atomic<long long>  start{};
+			std::atomic<long long>  end{};
+			long long               timeout{};
 
 		} m_stats;
 

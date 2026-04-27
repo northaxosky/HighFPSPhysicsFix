@@ -638,12 +638,12 @@ namespace HFPF
 				QueueFPSLimitOverride(m_Instance.m_limits.loading_fps, m_Instance.m_conf.disable_vsync_loading);
 				if (m_Instance.OSD_Load_Time) {
 					m_Instance.loading = true;
-					m_Instance.m_stats.start = clock();
+					m_Instance.m_stats.start = IPerfCounter::Query();
 				}
 			} else {
 				if (m_Instance.OSD_Load_Time) {
 					m_Instance.last = true;
-					m_Instance.m_stats.end = clock();
+					m_Instance.m_stats.end = IPerfCounter::Query();
 					m_Instance.loading = false;
 				}
 				if (m_Instance.intextlimits) {
@@ -1147,22 +1147,22 @@ namespace HFPF
 	const wchar_t* DRender::StatsRendererCallback_LoadTime()
 	{
 		if (m_Instance.loading) {
-			m_Instance.m_stats.end = clock();
+			m_Instance.m_stats.end = IPerfCounter::Query();
 			if (m_Instance.m_conf.loading_time) {
-				::_snwprintf_s(m_Instance.bufStats, _TRUNCATE, L"\nLoading time: %.2f sec", ((double)m_Instance.m_stats.end - m_Instance.m_stats.start) / ((double)CLOCKS_PER_SEC));
+				::_snwprintf_s(m_Instance.bufStats, _TRUNCATE, L"\nLoading time: %.2f sec", IPerfCounter::delta<double>(m_Instance.m_stats.start, m_Instance.m_stats.end));
 			}
 			if (m_Instance.m_conf.bare_loading_time) {
-				::_snwprintf_s(m_Instance.bufStats, _TRUNCATE, L"\n%.2f", ((double)m_Instance.m_stats.end - m_Instance.m_stats.start) / ((double)CLOCKS_PER_SEC));
+				::_snwprintf_s(m_Instance.bufStats, _TRUNCATE, L"\n%.2f", IPerfCounter::delta<double>(m_Instance.m_stats.start, m_Instance.m_stats.end));
 			}
 		} else if (m_Instance.last) {
 			if (m_Instance.m_conf.loading_time) {
-				::_snwprintf_s(m_Instance.bufStats, _TRUNCATE, L"\nLoading time: %.2f sec", ((double)m_Instance.m_stats.end - m_Instance.m_stats.start) / ((double)CLOCKS_PER_SEC));
+				::_snwprintf_s(m_Instance.bufStats, _TRUNCATE, L"\nLoading time: %.2f sec", IPerfCounter::delta<double>(m_Instance.m_stats.start, m_Instance.m_stats.end));
 			}
 			if (m_Instance.m_conf.bare_loading_time) {
-				::_snwprintf_s(m_Instance.bufStats, _TRUNCATE, L"\n%.2f", ((double)m_Instance.m_stats.end - m_Instance.m_stats.start) / ((double)CLOCKS_PER_SEC));
+				::_snwprintf_s(m_Instance.bufStats, _TRUNCATE, L"\n%.2f", IPerfCounter::delta<double>(m_Instance.m_stats.start, m_Instance.m_stats.end));
 			}
-			m_Instance.m_stats.timeout = clock();
-			if (m_Instance.m_conf.delay <= ((double)m_Instance.m_stats.timeout - m_Instance.m_stats.end) / ((double)CLOCKS_PER_SEC)) {
+			m_Instance.m_stats.timeout = IPerfCounter::Query();
+			if (m_Instance.m_conf.delay <= IPerfCounter::delta<double>(m_Instance.m_stats.end, m_Instance.m_stats.timeout)) {
 				::_snwprintf_s(m_Instance.bufStats, _TRUNCATE, L"");
 				m_Instance.last = false;
 			}
