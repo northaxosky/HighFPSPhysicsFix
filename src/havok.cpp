@@ -27,9 +27,10 @@ namespace HFPF
 	// generated code via `dq(uintptr_t(MagicN))`; NG/AE inline the values
 	// directly with `dd(0x...)`. Defined as inline 32-bit ints so that
 	// `&Magic1` is a stable address whose lower 32 bits are loaded by the
-	// 4-byte movss in the OG hook body.
-	static inline std::int32_t Magic1 = 0x426b4b44;  // 58.8235f
-	static inline std::int32_t Magic2 = 0xc26b4b44;  // -58.8235f
+	// 4-byte movss in the OG hook body. Bit values come from the named
+	// constants on DHavok (see include/havok.h).
+	static inline std::int32_t Magic1 = static_cast<std::int32_t>(DHavok::kBits_58_8235);     //  58.8235f
+	static inline std::int32_t Magic2 = static_cast<std::int32_t>(DHavok::kBits_Neg58_8235);  // -58.8235f
 
 
 	static constexpr const char* SECTION_MAIN = "Main";
@@ -165,7 +166,7 @@ namespace HFPF
 					dq(retnAddr + 0x5);
 
 					L(magicLabel);
-					dd(0x3f800000);  // 1
+					dd(DHavok::kBits_One);  // 1.0f
 				}
 			};
 			logger::info("[Havok] [Patch] [Fix stuttering] patching...");
@@ -236,7 +237,7 @@ namespace HFPF
 					dq(retnAddr + 0x5);
 
 					L(magicLabel);
-					dd(0x3c88888a);  // 0.016667
+					dd(DHavok::kBits_OneOver60);  // 1.0f/60.0f
 				}
 			};
 			{
@@ -271,7 +272,7 @@ namespace HFPF
 					dq(retnAddr + 0x8);
 
 					L(magicLabel);
-					dd(0x3c88888a);  // 0.016667
+					dd(DHavok::kBits_OneOver60);  // 1.0f/60.0f
 				}
 			};
 			logger::info("[Havok] [Patch] [Fix wind speed] patching...");
@@ -427,14 +428,14 @@ namespace HFPF
 					if (REL::Module::IsRuntimeOG()) {
 						dq(uintptr_t(&Magic1));  // 58.8235
 					} else {
-						dd(0x403c3c3c);  // 2.94118
+						dd(DHavok::kBits_2_94118);  //  2.94118f
 					}
 
 					L(reverseLabel);
 					if (REL::Module::IsRuntimeOG()) {
 						dq(uintptr_t(&Magic2));  // -58.8235
 					} else {
-						dd(0xc03c3c4b);  // -2.94118
+						dd(DHavok::kBits_Neg2_94118);  // -2.94118f
 					}
 				}
 			};
@@ -468,7 +469,7 @@ namespace HFPF
 					dq(retnAddr + 0x8);
 
 					L(magicLabel);
-					dd(0x3c88888a);  // 0.016667
+					dd(DHavok::kBits_OneOver60);  // 1.0f/60.0f
 				}
 			};
 			logger::info("[Havok] [Patch] [Fix lockpick rotation speed] patching...");
@@ -718,7 +719,7 @@ namespace HFPF
 					dq(retnAddr + 0x6);
 
 					L(magicLabel);
-					dd(0x3c88888a);  // 0.016667
+					dd(DHavok::kBits_OneOver60);  // 1.0f/60.0f
 				}
 			};
 			{
@@ -930,7 +931,7 @@ namespace HFPF
 				dq(retnAddr + 0x5);
 
 				L(magicLabel);
-				dd(0x3c8b4396);  // 0.017
+				dd(DHavok::kBits_OneOver58_8235);  // ~1.0f/58.8235f
 			}
 		};
 		logger::info("[Havok] [Patch] [Fix stuck animation] patching...");

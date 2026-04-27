@@ -54,8 +54,31 @@ namespace HFPF
 
 		inline static DWORD_PTR ft4handle;
 
-		static inline std::int32_t                    Magic1 = 0x426b4b44;  //58.8235
-		static inline std::int32_t                    Magic2 = 0xc26b4b44;  //-58.8235
+	public:
+		// Tier 4: named replacements for the physics magic constants that
+		// previously appeared as raw 32-bit hex literals throughout the xbyak
+		// hook bodies. The `kBits_*` form is what the code generators emit
+		// (via `dd(...)`) so we preserve the EXACT little-endian byte
+		// sequence regardless of how the compiler rounds the equivalent
+		// `kFloat_*` literal. Comment shows the float value each pattern
+		// represents.
+		static constexpr float        kFloat_60_0          = 60.0f;
+		static constexpr float        kFloat_OneOver60     = 1.0f / 60.0f;
+		static constexpr float        kFloat_NegOneOver60  = -1.0f / 60.0f;
+		static constexpr float        kFloat_58_8235       = 58.8235f;
+		static constexpr float        kFloat_Neg58_8235    = -58.8235f;
+		static constexpr float        kFloat_2_94118       = 2.94118f;
+		static constexpr float        kFloat_Neg2_94118    = -2.94118f;
+
+		static constexpr std::uint32_t kBits_OneOver60   = 0x3c88888aU;  //  1.0f/60.0f  (~0.0166667f)
+		static constexpr std::uint32_t kBits_58_8235     = 0x426b4b44U;  //  58.8235f
+		static constexpr std::uint32_t kBits_Neg58_8235  = 0xc26b4b44U;  // -58.8235f
+		static constexpr std::uint32_t kBits_2_94118     = 0x403c3c3cU;  //  2.94118f
+		static constexpr std::uint32_t kBits_Neg2_94118  = 0xc03c3c4bU;  // -2.94118f
+		static constexpr std::uint32_t kBits_One         = 0x3f800000U;  //  1.0f
+		static constexpr std::uint32_t kBits_OneOver58_8235 = 0x3c8b4396U;  // ~1.0f/58.8235f (~0.017f)
+
+	private:
 		inline static REL::Relocation<std::uintptr_t> Untie{ AID::Untie, Offsets::Untie };
 		inline static REL::Relocation<std::uintptr_t> FixStuttering1{ AID::FixStuttering1, Offsets::FixStuttering1 };
 		inline static REL::Relocation<std::uintptr_t> FixStuttering2{ AID::FixStuttering2, Offsets::FixStuttering2 };
