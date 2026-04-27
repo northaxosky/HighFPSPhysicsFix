@@ -28,6 +28,11 @@ MO2_EXECUTABLE  = "OG - F4SE"
 MO2_PROFILE     = "Default"
 DEPLOY_DIR      = Path(r"C:\Games\Modding\Nucleus\mods\High FPS Physics Fix\F4SE\Plugins")
 DEPLOYED_DLL    = DEPLOY_DIR / "HighFPSPhysicsFix.dll"
+# Default source for --dll: the freshly-built Release binary. Falling back to
+# DEPLOYED_DLL would be a footgun (it would deploy the currently-installed DLL
+# onto itself, silently re-validating stale bits after a rebuild).
+REPO_ROOT       = Path(__file__).resolve().parent.parent
+BUILT_DLL       = REPO_ROOT / "build" / "Release" / "HighFPSPhysicsFix.dll"
 F4SE_LOG_DIR    = Path.home() / "Documents" / "My Games" / "Fallout4" / "F4SE"
 PLUGIN_LOG      = F4SE_LOG_DIR / "HighFPSPhysicsFix.log"
 
@@ -74,7 +79,7 @@ def assert_not_mo2(pid: int, name: str) -> None:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--dll", type=Path, default=None,
-                   help="Source DLL to deploy (default: currently-deployed DLL).")
+                   help=f"Source DLL to deploy (default: {BUILT_DLL}).")
     p.add_argument("--profile", default=MO2_PROFILE)
     p.add_argument("--executable", default=MO2_EXECUTABLE)
     p.add_argument("--load-wait", type=int, default=None,
@@ -94,7 +99,7 @@ def main() -> int:
 
     # --- Pre-flight ---------------------------------------------------------
     step("Pre-flight checks")
-    src_dll = args.dll if args.dll is not None else DEPLOYED_DLL
+    src_dll = args.dll if args.dll is not None else BUILT_DLL
     src_dll = Path(src_dll)
 
     required = [
