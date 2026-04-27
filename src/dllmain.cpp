@@ -2,6 +2,106 @@
 
 #include <xbyak/xbyak.h>
 
+#include <spdlog/sinks/msvc_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+
+namespace
+{
+	// Tier 3: read [Debug] LogLevel from HighFPSPhysicsFix.ini next to the DLL.
+	// We parse this *before* F4SE::Init so the rotating logger picks it up.
+	spdlog::level::level_enum ReadInitialLogLevel()
+	{
+		std::filesystem::path iniPath;
+		try {
+			wchar_t buf[MAX_PATH]{};
+			HMODULE hSelf = nullptr;
+			if (::GetModuleHandleExW(
+					GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+					reinterpret_cast<LPCWSTR>(&ReadInitialLogLevel),
+					&hSelf) &&
+				::GetModuleFileNameW(hSelf, buf, MAX_PATH) > 0) {
+				iniPath = std::filesystem::path(buf).parent_path() / L"HighFPSPhysicsFix.ini";
+			}
+		} catch (const std::exception&) {
+			return spdlog::level::info;
+		}
+
+		if (iniPath.empty() || !std::filesystem::exists(iniPath)) {
+			return spdlog::level::info;
+		}
+
+		INIReader reader(iniPath.string());
+		if (reader.ParseError() < 0) {
+			return spdlog::level::info;
+		}
+
+		const std::string raw = reader.Get("Debug", "LogLevel", "info");
+		auto parsed = spdlog::level::from_str(raw);
+		// from_str returns level::off for unknown strings; don't silently mute.
+		if (parsed == spdlog::level::off && raw != "off") {
+			return spdlog::level::info;
+		}
+		return parsed;
+	}
+
+	// Tier 3: replace F4SE::Init's basic_file_sink with a rotating sink
+	// (5 MB x 3 files) writing to Documents\My Games\Fallout4\F4SE.
+	void InstallRotatingLogger(spdlog::level::level_enum a_level)
+	{
+		try {
+			wchar_t* known = nullptr;
+			if (FAILED(::SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &known)) || !known) {
+				if (known) {
+					::CoTaskMemFree(known);
+				}
+				return;
+			}
+			std::filesystem::path path = known;
+			::CoTaskMemFree(known);
+
+			path /= L"My Games";
+			path /= L"Fallout4";
+			path /= L"F4SE";
+			std::error_code ec;
+			std::filesystem::create_directories(path, ec);
+			path /= L"HighFPSPhysicsFix.log";
+
+			constexpr std::size_t kMaxSize  = 5ull * 1024ull * 1024ull;  // 5 MiB per file
+			constexpr std::size_t kMaxFiles = 3;                         // .log + .1.log + .2.log
+
+			std::vector<spdlog::sink_ptr> sinks{
+				std::make_shared<spdlog::sinks::msvc_sink_mt>(),
+				std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+					path.string(), kMaxSize, kMaxFiles, /*rotate_on_open=*/false),
+			};
+
+			auto log = std::make_shared<spdlog::logger>("global", sinks.begin(), sinks.end());
+			log->set_level(a_level);
+			log->flush_on(a_level);
+			spdlog::set_default_logger(std::move(log));
+			spdlog::set_pattern("[%T.%e] [%=5t] [%L] %v");
+		} catch (const std::exception&) {
+			// Logger setup failure is non-fatal; fall back to whatever F4SE
+			// configured. We deliberately swallow here to avoid taking down
+			// plugin load over a logging issue.
+		}
+	}
+
+	REX::LOG_LEVEL ToRexLevel(spdlog::level::level_enum a_lvl)
+	{
+		switch (a_lvl) {
+		case spdlog::level::trace:    return REX::LOG_LEVEL::TRACE;
+		case spdlog::level::debug:    return REX::LOG_LEVEL::DEBUG;
+		case spdlog::level::warn:     return REX::LOG_LEVEL::WARN;
+		case spdlog::level::err:      return REX::LOG_LEVEL::ERROR;
+		case spdlog::level::critical: return REX::LOG_LEVEL::CRITICAL;
+		case spdlog::level::off:      return REX::LOG_LEVEL::CRITICAL;
+		case spdlog::level::info:
+		default:                      return REX::LOG_LEVEL::INFO;
+		}
+	}
+}
+
 void MessageHandler(F4SE::MessagingInterface::Message* a_message)
 {
 	switch (a_message->type) {
@@ -61,13 +161,21 @@ extern "C" DLLEXPORT constinit auto F4SEPlugin_Version = []() noexcept {
 
 extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f4se)
 {
+	const auto logLevel = ReadInitialLogLevel();
+
 	F4SE::InitInfo init{};
-	init.logLevel = REX::LOG_LEVEL::INFO;
+	// Suppress F4SE::Init's default basic_file_sink; we install a rotating
+	// sink (5 MiB x 3) below so the log can't grow unbounded.
+	init.log = false;
+	init.logLevel = ToRexLevel(logLevel);
 	init.trampoline = true;
 	init.trampolineSize = 1 << 12;
 	F4SE::Init(a_f4se, init);
 
+	InstallRotatingLogger(logLevel);
+
 	logger::info("{} v{}", Version::PROJECT, Version::NAME);
+	logger::info("Log level: {}", spdlog::level::to_string_view(logLevel));
 
 	const auto ver = a_f4se->RuntimeVersion();
 	logger::info("Game version : {}", ver.string());
