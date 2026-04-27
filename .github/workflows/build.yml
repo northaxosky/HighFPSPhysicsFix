@@ -1,0 +1,73 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
+
+jobs:
+  build:
+    name: Build (Release / x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Export GitHub Actions cache env (vcpkg)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 'b472291f295551b7127359ea38fdd2ca092f6f1b'
+
+      - name: Configure
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cmake --preset vs2022-windows-vcpkg
+
+      - name: Build (Release)
+        run: cmake --build build --config Release
+
+      - name: clang-format check (advisory)
+        # The repo already ships a .clang-format. We run a dry-run check for
+        # signal but do NOT fail the build on diffs (Tier 3: format gate is
+        # opt-in until existing code is reformatted in a dedicated commit).
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $files = git ls-files src include | Where-Object { $_ -match '\.(cpp|h|hpp)$' }
+          if ($files) {
+            clang-format --dry-run --Werror $files
+          }
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HighFPSPhysicsFix-${{ github.sha }}
+          path: |
+            build/Release/HighFPSPhysicsFix.dll
+            build/Release/HighFPSPhysicsFix.pdb
+            HighFPSPhysicsFix.ini
+          if-no-files-found: error
