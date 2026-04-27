@@ -691,10 +691,11 @@ namespace HFPF
 					Xbyak::Label retnLabel;
 					Xbyak::Label magicLabel;
 
-					mov(ecx, ptr[(REL::Module::IsRuntimeOG() ? rbx : rdi) + 0x26C]);
 					if (REL::Module::IsRuntimeOG()) {
+						mov(ecx, ptr[rbx + 0x26C]);
 						movss(xmm8, dword[rip + magicLabel]);
 					} else {
+						mov(ecx, ptr[rdi + 0x26C]);
 						movss(xmm7, dword[rip + magicLabel]);
 					}
 

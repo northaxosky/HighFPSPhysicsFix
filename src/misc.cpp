@@ -47,10 +47,17 @@ namespace HFPF
 				sizeof(Payloads::disable_blackloading_patch));
 		}
 		if (m_conf.disable_loading_screens) {
-			REL::safe_write(
-				LoadingScreensAddress.address(),
-				reinterpret_cast<const void*>(Payloads::NOP5),
-				sizeof(Payloads::NOP5));
+			if (REL::Module::IsRuntimeOG()) {
+				REL::safe_write(
+					LoadingScreensAddress.address(),
+					reinterpret_cast<const void*>(Payloads::NOP4),
+					sizeof(Payloads::NOP4));
+			} else {
+				REL::safe_write(
+					LoadingScreensAddress.address(),
+					reinterpret_cast<const void*>(Payloads::NOP5),
+					sizeof(Payloads::NOP5));
+			}
 		}
 		if (m_conf.post_loading_speed != 1.0f) {
 			{
