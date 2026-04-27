@@ -72,6 +72,7 @@ jobs:
           $pkg = "package/HighFPSPhysicsFix"
           New-Item -ItemType Directory -Force -Path "$pkg/F4SE/Plugins" | Out-Null
           Copy-Item "build/Release/HighFPSPhysicsFix.dll" "$pkg/F4SE/Plugins/"
+          Copy-Item "build/Release/HighFPSPhysicsFix.pdb" "$pkg/F4SE/Plugins/"
           Copy-Item "HighFPSPhysicsFix.ini"               "$pkg/F4SE/Plugins/"
           Get-ChildItem -Recurse $pkg
 
@@ -80,13 +81,6 @@ jobs:
         with:
           name: HighFPSPhysicsFix-mod-${{ github.sha }}
           path: package/HighFPSPhysicsFix/**
-          if-no-files-found: error
-
-      - name: Upload debug symbols
-        uses: actions/upload-artifact@v4
-        with:
-          name: HighFPSPhysicsFix-pdb-${{ github.sha }}
-          path: build/Release/HighFPSPhysicsFix.pdb
           if-no-files-found: error
 
       - name: Package release zip
@@ -102,7 +96,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            ${{ env.ZIP }}
-            build/Release/HighFPSPhysicsFix.pdb
+          files: ${{ env.ZIP }}
           generate_release_notes: true
