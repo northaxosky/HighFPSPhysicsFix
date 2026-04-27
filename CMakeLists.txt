@@ -240,7 +240,7 @@ if (MSVC)
 			#   in this tier; /WX is enabled below).
 
 			"$<$<CONFIG:DEBUG>:>"
-			"$<$<CONFIG:RELEASE>:/JMC-;/Ob3>"
+			"$<$<CONFIG:RELEASE>:/JMC-;/Ob3;/GL;/Gw;/Gy>"
 	)
 
 	target_link_options(
@@ -252,7 +252,7 @@ if (MSVC)
 			/HIGHENTROPYVA
 			/guard:cf
 			"$<$<CONFIG:DEBUG>:/INCREMENTAL;/DEBUG:FULL;/OPT:NOREF;/OPT:NOICF>"
-			"$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/DEBUG:FULL;/OPT:REF;/OPT:ICF>"
+			"$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/DEBUG:FULL;/OPT:REF;/OPT:ICF;/LTCG>"
 	)
 endif ()
 
