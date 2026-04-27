@@ -130,8 +130,15 @@ void MessageHandler(F4SE::MessagingInterface::Message* a_message)
 // NG/AE F4SE consume F4SEPlugin_Version and ignore Query. Export both so the
 // same DLL loads under any supported runtime; Address Library handles
 // per-runtime address resolution.
-extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface*, F4SE::PluginInfo* a_info)
+extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a_f4se, F4SE::PluginInfo* a_info)
 {
+	if (!a_f4se || !a_info) {
+		return false;
+	}
+	// OG only. NG/AE are handled by F4SEPlugin_Version.
+	if (a_f4se->RuntimeVersion() != F4SE::RUNTIME_1_10_163) {
+		return false;
+	}
 	a_info->infoVersion = F4SE::PluginInfo::kVersion;
 	a_info->name = Version::PROJECT.data();
 	a_info->version = Version::MAJOR;
@@ -144,17 +151,21 @@ extern "C" DLLEXPORT constinit auto F4SEPlugin_Version = []() noexcept {
 	data.PluginVersion({ Version::MAJOR, Version::MINOR, Version::PATCH });
 	data.PluginName(Version::PROJECT.data());
 	data.AuthorName("AntoniX35");
-	data.UsesAddressLibrary(true);
 	data.UsesSigScanning(false);
-	data.IsLayoutDependent(true);
 	data.HasNoStructUse(false);
-	// OG (1.10.163) reads F4SEPlugin_Query and ignores PluginVersionData,
-	// so only NG/AE runtimes need to be listed here.
-	data.CompatibleVersions({
-		F4SE::RUNTIME_1_10_980,  // NG (Next-Gen Update)
-		F4SE::RUNTIME_1_10_984,  // NG (Next-Gen Update)
-		F4SE::RUNTIME_LATEST,    // AE (1.11.191)
-	});
+	// Bit semantics (per Addictol's reference and F4SE source):
+	//   addressIndependence:   bit 1 = AddressLib 1.10.980+ (NG)
+	//                          bit 2 = AddressLib 1.11.137+ (AE)
+	//   structureIndependence: bit 1 = layout 1.10.980+      (NG)
+	//                          bit 2 = layout 1.11.137+      (AE)
+	// commonlibf4's UsesAddressLibrary() / IsLayoutDependent() helpers only
+	// set bit 2 (AE). Set bit 1 manually to also advertise NG support.
+	data.UsesAddressLibrary(true);  // bit 2: AE AddressLib
+	data.IsLayoutDependent(true);   // bit 2: AE layout
+	data.addressIndependence |= (1u << 1);    // bit 1: NG AddressLib
+	data.structureIndependence |= (1u << 1);  // bit 1: NG layout
+	// Empty compatibleVersions: rely on independence flags (Addictol pattern).
+	data.CompatibleVersions({});
 
 	return data;
 }();
