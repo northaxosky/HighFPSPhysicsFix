@@ -122,7 +122,11 @@ namespace HFPF
 	{
 		if (m_conf.dynbudget_enabled) {
 			m_gv.fUpdateBudgetMS = RE::GetINISettingAddr<float>("fUpdateBudgetMS:Papyrus");
-			ASSERT(m_gv.fUpdateBudgetMS);
+			if (!m_gv.fUpdateBudgetMS) {
+				logger::warn("[Papyrus] INI setting 'fUpdateBudgetMS:Papyrus' missing; dynamic update budget will be disabled.");
+				m_conf.dynbudget_enabled = false;
+				m_conf.stats_enabled = false;
+			}
 		}
 	}
 
@@ -133,7 +137,12 @@ namespace HFPF
 
 	float DPapyrus::CalculateUpdateBudget()
 	{
-		float interval = std::clamp(*Game::g_frameTimer, m_Instance.m_t_min, m_Instance.m_t_max);
+		const float ft = *Game::g_frameTimer;
+		if (!std::isfinite(ft) || ft <= 0.f) {
+			return m_Instance.m_lastInterval * m_Instance.m_bmult;
+		}
+
+		float interval = std::clamp(ft, m_Instance.m_t_min, m_Instance.m_t_max);
 
 		if (interval <= m_Instance.m_lastInterval) {
 			m_Instance.m_lastInterval = interval;
@@ -143,7 +152,9 @@ namespace HFPF
 
 		interval = m_Instance.m_lastInterval * m_Instance.m_bmult;
 
-		*m_Instance.m_gv.fUpdateBudgetMS = interval;
+		if (m_Instance.m_gv.fUpdateBudgetMS) {
+			*m_Instance.m_gv.fUpdateBudgetMS = interval;
+		}
 
 		return interval;
 	}

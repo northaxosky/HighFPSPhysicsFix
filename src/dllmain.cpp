@@ -70,6 +70,28 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f
 	const auto ver = a_f4se->RuntimeVersion();
 	logger::info("Game version : {}", ver.string());
 
+	// Tier 1: upper-bound runtime gate. We support OG (1.10.163), NG (1.10.984+),
+	// and AE (1.11.x). Address Library hides the offset differences, but if a
+	// future runtime ships with a fundamentally new layout, our hard-coded
+	// behavioral assumptions (xbyak hook bodies, struct field offsets) may
+	// silently mis-apply. Refuse to install hooks on anything we have not
+	// validated rather than risk a crash in the user's first session.
+	{
+		const auto mver = REL::Module::GetSingleton()->version();
+		const REL::Version k_min{ 1, 10, 163, 0 };
+		const REL::Version k_max_exclusive{ 1, 20, 0, 0 };
+		if (mver < k_min || !(mver < k_max_exclusive)) {
+			logger::warn(
+				"Unsupported Fallout 4 runtime {} (supported: 1.10.163, 1.10.984+ NG, 1.11.x AE). "
+				"Hooks will NOT be installed.",
+				mver.string());
+			return false;
+		}
+		logger::info("Module version: {} ({})",
+			mver.string(),
+			REL::Module::IsRuntimeOG() ? "OG" : (REL::Module::IsRuntimeNG() ? "NG" : "AE"));
+	}
+
 	const auto messaging = F4SE::GetMessagingInterface();
 	messaging->RegisterListener(MessageHandler);
 	int result1 = HFPF::IConfig::LoadConfiguration();

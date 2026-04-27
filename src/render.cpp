@@ -944,7 +944,7 @@ namespace HFPF
 			ppImmediateContext);
 
 		if (hr > 0) {
-			logger::warn("[Render] D3D11CreateDeviceAndSwapChain returned status: {}", hr);
+			logger::warn("[Render] D3D11CreateDeviceAndSwapChain returned status: 0x{:08X}", static_cast<unsigned>(hr));
 		}
 
 		if (SUCCEEDED(hr)) {
@@ -963,9 +963,8 @@ namespace HFPF
 			}
 		} else {
 			logger::error(
-				PLUGIN_NAME_LONG,
-				"[Render] D3D11CreateDeviceAndSwapChain failed: {}",
-				hr);
+				"[Render] D3D11CreateDeviceAndSwapChain failed: 0x{:08X}",
+				static_cast<unsigned>(hr));
 		}
 
 		return hr;
@@ -990,7 +989,7 @@ namespace HFPF
 		if (SUCCEEDED(hr)) {
 			m_Instance.m_dxgiFactory = static_cast<IDXGIFactory*>(*ppFactory);
 		} else {
-			logger::critical("[Render] CreateDXGIFactory failed {}", hr);
+			logger::critical("[Render] CreateDXGIFactory failed: 0x{:08X}", static_cast<unsigned>(hr));
 		}
 		return hr;
 	}
@@ -1005,6 +1004,9 @@ namespace HFPF
 		}
 
 		HRESULT hr = pSwapChain->Present(m_Instance.m_current_vsync_present_interval, m_Instance.m_present_flags);
+		if (FAILED(hr)) {
+			logger::error("[Render] IDXGISwapChain::Present failed: 0x{:08X}", static_cast<unsigned>(hr));
+		}
 
 		for (const auto& f : m_Instance.m_presentCallbacksPost) {
 			f(pSwapChain);
@@ -1015,17 +1017,25 @@ namespace HFPF
 
 	IDXGIFactory* DRender::DXGI_GetFactory() const
 	{
-		HMODULE hModule = ::LoadLibraryA("dxgi.dll");
-		if (!hModule)
+		using ModuleHandle = std::unique_ptr<std::remove_pointer_t<HMODULE>, decltype(&::FreeLibrary)>;
+		ModuleHandle hModule{ ::LoadLibraryA("dxgi.dll"), &::FreeLibrary };
+		if (!hModule) {
+			logger::error("[Render] LoadLibraryA(\"dxgi.dll\") failed: {}", ::GetLastError());
 			return nullptr;
+		}
 
-		auto func = reinterpret_cast<CreateDXGIFactory_T>(::GetProcAddress(hModule, "CreateDXGIFactory"));
-		if (!func)
+		auto func = reinterpret_cast<CreateDXGIFactory_T>(::GetProcAddress(hModule.get(), "CreateDXGIFactory"));
+		if (!func) {
+			logger::error("[Render] GetProcAddress(\"CreateDXGIFactory\") failed: {}", ::GetLastError());
 			return nullptr;
+		}
 
-		IDXGIFactory* pFactory;
-		if (!SUCCEEDED(func(IID_PPV_ARGS(&pFactory))))
+		IDXGIFactory* pFactory = nullptr;
+		HRESULT       hr = func(IID_PPV_ARGS(&pFactory));
+		if (FAILED(hr)) {
+			logger::error("[Render] CreateDXGIFactory failed: 0x{:08X}", static_cast<unsigned>(hr));
 			return nullptr;
+		}
 
 		return pFactory;
 	}

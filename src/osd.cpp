@@ -403,17 +403,27 @@ finish:
 
 	const wchar_t* DOSD::StatsRendererCallback_FPS()
 	{
-		::_snwprintf_s(m_Instance.m_bufStats1, _TRUNCATE,
-			L"FPS: %.1Lf",
-			1.0L / (m_Instance.m_stats.cur.frametime / 1000000.0L));
+		const long double ft = m_Instance.m_stats.cur.frametime;
+		if (!std::isfinite(static_cast<double>(ft)) || ft <= 0.0L) {
+			::_snwprintf_s(m_Instance.m_bufStats1, _TRUNCATE, L"FPS: --");
+		} else {
+			::_snwprintf_s(m_Instance.m_bufStats1, _TRUNCATE,
+				L"FPS: %.1Lf",
+				1.0L / (ft / 1000000.0L));
+		}
 		return m_Instance.m_bufStats1;
 	}
 
 	const wchar_t* DOSD::StatsRendererCallback_SimpleFPS()
 	{
-		::_snwprintf_s(m_Instance.m_bufStats1, _TRUNCATE,
-			L"%.1Lf",
-			1.0L / (m_Instance.m_stats.cur.frametime / 1000000.0L));
+		const long double ft = m_Instance.m_stats.cur.frametime;
+		if (!std::isfinite(static_cast<double>(ft)) || ft <= 0.0L) {
+			::_snwprintf_s(m_Instance.m_bufStats1, _TRUNCATE, L"--");
+		} else {
+			::_snwprintf_s(m_Instance.m_bufStats1, _TRUNCATE,
+				L"%.1Lf",
+				1.0L / (ft / 1000000.0L));
+		}
 
 		return m_Instance.m_bufStats1;
 	}
@@ -493,8 +503,10 @@ finish:
 				m_Instance.m_stats.frameCounter -
 				m_Instance.m_stats.lastFrameCount;
 
-			m_Instance.m_stats.cur.frametime =
-				static_cast<long double>(deltaT) / static_cast<long double>(deltaFC);
+			if (deltaFC > 0) {
+				m_Instance.m_stats.cur.frametime =
+					static_cast<long double>(deltaT) / static_cast<long double>(deltaFC);
+			}
 
 			m_Instance.m_stats.lastFrameCount =
 				m_Instance.m_stats.frameCounter;

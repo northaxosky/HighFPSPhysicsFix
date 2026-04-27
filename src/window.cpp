@@ -202,9 +202,16 @@ namespace HFPF
 	void DWindow::OnGameConfigLoaded()
 	{
 		m_gv.iLocationX = RE::GetINISettingAddr<int>("iLocation X:Display");
-		ASSERT(m_gv.iLocationX);
+		if (!m_gv.iLocationX) {
+			logger::warn("[Window] INI setting 'iLocation X:Display' missing; window-position fixes will be disabled.");
+			return;
+		}
 		m_gv.iLocationY = RE::GetINISettingAddr<int>("iLocation Y:Display");
-		ASSERT(m_gv.iLocationY);
+		if (!m_gv.iLocationY) {
+			logger::warn("[Window] INI setting 'iLocation Y:Display' missing; window-position fixes will be disabled.");
+			m_gv.iLocationX = nullptr;
+			return;
+		}
 		if (*m_gv.iLocationX == -32000) {
 			*m_gv.iLocationX = 0;
 			*m_gv.iLocationY = 0;

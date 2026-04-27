@@ -76,15 +76,26 @@ namespace HFPF
 	{
 		if (m_conf.fix_load_model) {
 			m_gv.fLoadingModel_TriggerZoomSpeed = RE::GetINISettingAddr<float>("fLoadingModel_TriggerZoomSpeed:Interface");
-			ASSERT(m_gv.fLoadingModel_TriggerZoomSpeed);
+			if (!m_gv.fLoadingModel_TriggerZoomSpeed) {
+				logger::warn("[Havok] INI setting 'fLoadingModel_TriggerZoomSpeed:Interface' missing; FixLoadingModel will be disabled.");
+				m_conf.fix_load_model = false;
+				return;
+			}
 
 			m_gv.fLoadingModel_MouseToRotateSpeed = RE::GetINISettingAddr<float>("fLoadingModel_MouseToRotateSpeed:Interface");
-			ASSERT(m_gv.fLoadingModel_MouseToRotateSpeed);
+			if (!m_gv.fLoadingModel_MouseToRotateSpeed) {
+				logger::warn("[Havok] INI setting 'fLoadingModel_MouseToRotateSpeed:Interface' missing; FixLoadingModel will be disabled.");
+				m_conf.fix_load_model = false;
+				return;
+			}
 		}
 	}
 
 	void DHavok::PostConfigLoad(Event code, void* data)
 	{
+		if (!m_Instance.m_conf.fix_load_model) {
+			return;
+		}
 		m_Instance.Patch_FixLoadModelSpeed1();
 		m_Instance.Patch_FixLoadModelSpeed2();
 	}
