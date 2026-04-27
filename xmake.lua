@@ -58,3 +58,43 @@ target("HighFPSPhysicsFix")
         "$(builddir)/HighFPSPhysicsFix.gen/version.rc",
         "$(builddir)/HighFPSPhysicsFix.gen/resources.rc"
     )
+
+    -- Compile / link flag parity with the retiring CMake build (CMakeLists.txt:212-256).
+    add_cxxflags(
+        "/sdl",
+        "/W4",
+        "/WX",
+        "/GS",
+        "/guard:cf",
+        "/Brepro",
+        "/utf-8",
+        "/Zi",
+        "/permissive-",
+        "/Zc:preprocessor",
+        "/Zc:__cplusplus",
+        "/Zc:throwingNew",
+        "/Zc:inline",
+        "/wd4200",
+        "/wd4100",
+        { force = true, tools = { "cl" } }
+    )
+    add_ldflags(
+        "/CETCOMPAT",
+        "/DYNAMICBASE",
+        "/NXCOMPAT",
+        "/HIGHENTROPYVA",
+        "/guard:cf",
+        { force = true, tools = { "link" } }
+    )
+
+    if is_mode("releasedbg") then
+        add_cxxflags("/JMC-", "/Ob3", "/GL", "/Gw", "/Gy", { force = true, tools = { "cl" } })
+        add_ldflags(
+            "/INCREMENTAL:NO",
+            "/DEBUG:FULL",
+            "/OPT:REF",
+            "/OPT:ICF",
+            "/LTCG",
+            { force = true, tools = { "link" } }
+        )
+    end
