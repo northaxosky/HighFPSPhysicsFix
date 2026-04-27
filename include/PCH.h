@@ -27,7 +27,6 @@
 #include <ext/IHook.h>
 #include <ext/INIReader.h>
 #include <ext/StrHelpers.h>
-#include <ext/stl_containers.h>
 
 #include <algorithm>
 #include <atomic>
