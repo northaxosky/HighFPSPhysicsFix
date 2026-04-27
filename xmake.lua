@@ -159,12 +159,28 @@ task("package")
     })
     on_run(function ()
         import("core.project.project")
-        import("core.base.option")
         local target = project.target("HighFPSPhysicsFix")
         if not target then
             raise("target 'HighFPSPhysicsFix' not found - run `xmake` first")
         end
-        local dll = target:targetfile()
+        -- Find the most recently built DLL across mode subdirs (the task
+        -- doesn't always see the same mode config used by `xmake`).
+        local dll
+        local pdb
+        local search_root = path.join(os.projectdir(), "build", "windows", "x64")
+        for _, mode in ipairs({ "releasedbg", "release", "debug" }) do
+            local candidate = path.join(search_root, mode, "HighFPSPhysicsFix.dll")
+            if os.isfile(candidate) then
+                dll = candidate
+                pdb = path.join(search_root, mode, "HighFPSPhysicsFix.pdb")
+                break
+            end
+        end
+        if not dll then
+            -- Fall back to the targetfile xmake reports.
+            dll = target:targetfile()
+            pdb = path.join(target:targetdir(), target:name() .. ".pdb")
+        end
         if not os.isfile(dll) then
             raise("DLL not built: " .. dll .. " - run `xmake` first")
         end
@@ -173,8 +189,7 @@ task("package")
         local plugins_dir = path.join(stage, "F4SE", "Plugins")
         os.mkdir(plugins_dir)
         os.cp(dll, plugins_dir)
-        local pdb = path.join(target:targetdir(), target:name() .. ".pdb")
-        if os.isfile(pdb) then
+        if pdb and os.isfile(pdb) then
             os.cp(pdb, plugins_dir)
         end
         if os.isfile("HighFPSPhysicsFix.ini") then

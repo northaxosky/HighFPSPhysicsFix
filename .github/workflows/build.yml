@@ -59,7 +59,15 @@ jobs:
           }
 
       - name: Stage mod package
-        run: xmake package
+        shell: pwsh
+        run: |
+          $built = "build/windows/x64/releasedbg"
+          $pkg   = "build/package/HighFPSPhysicsFix"
+          New-Item -ItemType Directory -Force -Path "$pkg/F4SE/Plugins" | Out-Null
+          Copy-Item "$built/HighFPSPhysicsFix.dll" "$pkg/F4SE/Plugins/"
+          Copy-Item "$built/HighFPSPhysicsFix.pdb" "$pkg/F4SE/Plugins/"
+          Copy-Item "HighFPSPhysicsFix.ini"        "$pkg/F4SE/Plugins/"
+          Get-ChildItem -Recurse $pkg
 
       - name: Upload mod package (drop into MO2 / Data)
         uses: actions/upload-artifact@v4
