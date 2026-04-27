@@ -198,7 +198,7 @@ namespace HFPF
 		if (m_conf.limits.game > 0.0f) {
 			fps_limit = 1;
 			m_hasLimits = true;
-			current_fps_max = fps_max = static_cast<long long>((1.0L / static_cast<long double>(m_conf.limits.game)) * 1000000.0L);
+			current_fps_max = fps_max = FpsToMicros(m_conf.limits.game);
 			logger::info("[Render] Framerate limit (game): {}", m_conf.limits.game);
 		} else if (m_conf.limits.game == 0.0f) {
 			fps_limit = 0;
@@ -210,31 +210,31 @@ namespace HFPF
 			fps_limit = 1;
 			intextlimits = true;
 			m_hasLimits = true;
-			m_limits.ext_fps = current_fps_max = fps_max = static_cast<long long>((1.0L / static_cast<long double>(m_conf.limits.exterior)) * 1000000.0L);
+			m_limits.ext_fps = current_fps_max = fps_max = FpsToMicros(m_conf.limits.exterior);
 			logger::info("[Render] Framerate limit (exterior): {}", m_conf.limits.exterior);
 		}
 		if (m_conf.limits.interior > 0.0f) {
 			fps_limit = 1;
 			intextlimits = true;
 			m_hasLimits = true;
-			m_limits.int_fps = current_fps_max = fps_max = static_cast<long long>((1.0L / static_cast<long double>(m_conf.limits.interior)) * 1000000.0L);
+			m_limits.int_fps = current_fps_max = fps_max = FpsToMicros(m_conf.limits.interior);
 			logger::info("[Render] Framerate limit (interior): {}", m_conf.limits.interior);
 		}
 
 		if (m_conf.limits.ui_loadscreen > 0.0f) {
-			m_limits.loading_fps = static_cast<long long>((1.0L / static_cast<long double>(m_conf.limits.ui_loadscreen)) * 1000000.0L);
+			m_limits.loading_fps = FpsToMicros(m_conf.limits.ui_loadscreen);
 			logger::info("[Render] Framerate limit (loading): {}", m_conf.limits.ui_loadscreen);
 		}
 		if (m_conf.limits.ui_lockpick > 0.0f) {
-			m_limits.lockpick_fps = static_cast<long long>((1.0L / static_cast<long double>(m_conf.limits.ui_lockpick)) * 1000000.0L);
+			m_limits.lockpick_fps = FpsToMicros(m_conf.limits.ui_lockpick);
 			logger::info("[Render] Framerate limit (lockpicking): {}", m_conf.limits.ui_lockpick);
 		}
 		if (m_conf.limits.ui_pipboy > 0.0f) {
-			m_limits.pipboy_fps = static_cast<long long>((1.0L / static_cast<long double>(m_conf.limits.ui_pipboy)) * 1000000.0L);
+			m_limits.pipboy_fps = FpsToMicros(m_conf.limits.ui_pipboy);
 			logger::info("[Render] Framerate limit (pipboy): {}", m_conf.limits.ui_pipboy);
 		}
 		if (m_conf.limits.out_of_focus > 0.0f) {
-			m_limits.out_of_focus_fps = static_cast<long long>((1.0L / static_cast<long double>(m_conf.limits.out_of_focus)) * 1000000.0L);
+			m_limits.out_of_focus_fps = FpsToMicros(m_conf.limits.out_of_focus);
 			m_hasLimits = true;
 			fps_limit = 1;
 			logger::info("[Render] Framerate limit (out of focus): {}", m_conf.limits.out_of_focus);

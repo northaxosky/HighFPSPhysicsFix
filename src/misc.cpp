@@ -115,7 +115,7 @@ namespace HFPF
 			timing = IPerfCounter::Query();
 			auto& trampoline = REL::GetTrampoline();
 			trampoline.write_call<5>(Present.address(), reinterpret_cast<std::uintptr_t>(ThreadWait));
-			m_conf.max_wait_time = static_cast<long long>((1.0L / 60.0L) * 1000000.0L);
+			m_conf.max_wait_time = HFPF::FpsToMicros(60.0);
 		}
 
 		if (m_conf.disable_actor_fade) {

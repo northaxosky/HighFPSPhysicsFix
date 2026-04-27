@@ -11,8 +11,8 @@ __declspec(noreturn) static void IErrors_Halt(void)
 /**
  *	Report a failed assertion and exit the program
  *	
- *	@param file the file where the error occured
- *	@param line the line number where the error occured
+ *	@param file the file where the error occurred
+ *	@param line the line number where the error occurred
  *	@param desc an error message
  */
 void _AssertionFailed(const char * file, unsigned long line, const char * desc)
@@ -25,8 +25,8 @@ void _AssertionFailed(const char * file, unsigned long line, const char * desc)
 /**
  *	Report a failed assertion and exit the program
  *	
- *	@param file the file where the error occured
- *	@param line the line number where the error occured
+ *	@param file the file where the error occurred
+ *	@param line the line number where the error occurred
  *	@param desc an error message
  *	@param code the error code
  */
@@ -46,8 +46,8 @@ void _AssertionFailed_ErrCode(const char * file, unsigned long line, const char 
 /**
  *	Report a failed assertion and exit the program
  *	
- *	@param file the file where the error occured
- *	@param line the line number where the error occured
+ *	@param file the file where the error occurred
+ *	@param line the line number where the error occurred
  *	@param desc an error message
  *	@param code the error code
  */
