@@ -8,8 +8,9 @@ force-closes Fallout4.exe (NEVER ModOrganizer.exe — that would brick the
 RootBuilder VFS) and reports whether the plugin loaded cleanly.
 
 Usage:
-    python scripts/test_deploy_run.py [--dll PATH] [--dry-run]
+    python scripts/test_deploy_run.py [--dll PATH] [--dry-run] [--no-launch]
                                       [--load-wait 60] [--spawn-timeout 90]
+                                      [--timeout 60]
 """
 from __future__ import annotations
 
@@ -19,7 +20,6 @@ import shutil
 import subprocess
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
 
 # --- Configuration (environment-specific paths) -----------------------------
@@ -40,10 +40,14 @@ def fail(msg: str) -> None: print(f"  XX  {msg}", flush=True)
 # --- Process helpers --------------------------------------------------------
 def find_processes(name: str) -> list[dict]:
     """Return [{Id, ProcessName}, ...] for processes whose .exe stem matches name (case-insensitive)."""
-    out = subprocess.run(
-        ["tasklist.exe", "/FO", "CSV", "/NH", "/FI", f"IMAGENAME eq {name}.exe"],
-        capture_output=True, text=True, check=False,
-    )
+    try:
+        out = subprocess.run(
+            ["tasklist.exe", "/FO", "CSV", "/NH", "/FI", f"IMAGENAME eq {name}.exe"],
+            capture_output=True, text=True, check=False,
+        )
+    except OSError as e:
+        warn(f"tasklist failed: {e}")
+        return []
     rows: list[dict] = []
     for line in out.stdout.splitlines():
         # CSV: "Image","PID","Session","Session#","MemUsage"
@@ -52,12 +56,15 @@ def find_processes(name: str) -> list[dict]:
             try:
                 rows.append({"name": parts[0], "pid": int(parts[1])})
             except ValueError:
-                pass
+                continue
     return rows
 
 def kill_pid(pid: int) -> None:
-    subprocess.run(["taskkill.exe", "/F", "/PID", str(pid)],
-                   capture_output=True, check=False)
+    try:
+        subprocess.run(["taskkill.exe", "/F", "/PID", str(pid)],
+                       capture_output=True, check=False)
+    except OSError as e:
+        warn(f"taskkill PID {pid} failed: {e}")
 
 def assert_not_mo2(pid: int, name: str) -> None:
     if name.lower().startswith("modorganizer"):
@@ -70,25 +77,37 @@ def main() -> int:
                    help="Source DLL to deploy (default: currently-deployed DLL).")
     p.add_argument("--profile", default=MO2_PROFILE)
     p.add_argument("--executable", default=MO2_EXECUTABLE)
-    p.add_argument("--load-wait", type=int, default=60,
-                   help="Seconds to wait after Fallout4.exe spawns before declaring it stable.")
+    p.add_argument("--load-wait", type=int, default=None,
+                   help="Seconds to wait after Fallout4.exe spawns. "
+                        "Defaults to --timeout (60).")
     p.add_argument("--spawn-timeout", type=int, default=90,
                    help="Seconds to wait for Fallout4.exe to appear.")
+    p.add_argument("--timeout", type=int, default=60,
+                   help="Convenience override for --load-wait (default 60s).")
     p.add_argument("--dry-run", action="store_true",
                    help="Skip DLL deployment (uses currently-deployed DLL).")
+    p.add_argument("--no-launch", action="store_true",
+                   help="Deploy only; do not launch Fallout 4 or analyze logs.")
     args = p.parse_args()
+
+    load_wait = args.load_wait if args.load_wait is not None else args.timeout
 
     # --- Pre-flight ---------------------------------------------------------
     step("Pre-flight checks")
-    for path in (MO2_EXE, DEPLOY_DIR, F4SE_LOG_DIR):
-        if not path.exists():
-            fail(f"Missing: {path}")
-            return 2
-    ok(f"MO2: {MO2_EXE}")
-    ok(f"Deploy dir: {DEPLOY_DIR}")
-    ok(f"Log dir: {F4SE_LOG_DIR}")
+    src_dll = args.dll if args.dll is not None else DEPLOYED_DLL
+    src_dll = Path(src_dll)
 
-    src_dll = args.dll or DEPLOYED_DLL
+    required = [
+        ("MO2 executable", MO2_EXE),
+        ("Deploy directory", DEPLOY_DIR),
+        ("F4SE log directory", F4SE_LOG_DIR),
+    ]
+    for label, path in required:
+        if not path.exists():
+            fail(f"Missing {label}: {path}")
+            return 2
+        ok(f"{label}: {path}")
+
     if not src_dll.exists():
         fail(f"DLL not found: {src_dll}")
         return 2
@@ -109,9 +128,19 @@ def main() -> int:
         step("Deploying DLL")
         # Atomic-ish: copy to .new then replace
         tmp = DEPLOYED_DLL.with_suffix(".dll.new")
-        shutil.copy2(src_dll, tmp)
-        os.replace(tmp, DEPLOYED_DLL)
+        try:
+            shutil.copy2(src_dll, tmp)
+            os.replace(tmp, DEPLOYED_DLL)
+        except OSError as e:
+            fail(f"Deploy failed: {e}")
+            return 2
         ok(f"Deployed -> {DEPLOYED_DLL}")
+
+    if args.no_launch:
+        step("--no-launch: skipping launch and log analysis")
+        print()
+        print("RESULT: PASS")
+        return 0
 
     # --- Confirm no stale game ---------------------------------------------
     stale = find_processes("Fallout4")
@@ -151,9 +180,9 @@ def main() -> int:
     ok(f"Fallout4.exe spawned (PID {fo4_pid})")
 
     # --- Wait for save load, watch for early exit (crash) ------------------
-    step(f"Waiting {args.load_wait}s for StartOnSave to load the save")
+    step(f"Waiting {load_wait}s for StartOnSave to load the save")
     early_exit = False
-    deadline = time.monotonic() + args.load_wait
+    deadline = time.monotonic() + load_wait
     while time.monotonic() < deadline:
         time.sleep(0.5)
         if not find_processes("Fallout4"):
@@ -163,7 +192,7 @@ def main() -> int:
     if early_exit:
         fail("Fallout4.exe exited early. Likely crash on load.")
     else:
-        ok(f"Fallout4.exe still alive after {args.load_wait}s")
+        ok(f"Fallout4.exe still alive after {load_wait}s")
 
     # --- Force-close Fallout4.exe (NEVER MO2) ------------------------------
     procs = find_processes("Fallout4")
@@ -250,3 +279,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nInterrupted.", file=sys.stderr)
         sys.exit(130)
+    except RuntimeError as e:
+        print(f"\nRefused: {e}", file=sys.stderr)
+        sys.exit(5)
