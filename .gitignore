@@ -9,3 +9,6 @@ CLAUDE.md
 test-results/
 
 extern/CommonLibF4/CMakeLists.txt
+
+vc140.pdb
+*.pdb

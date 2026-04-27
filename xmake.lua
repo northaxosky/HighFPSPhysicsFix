@@ -38,7 +38,8 @@ target("HighFPSPhysicsFix")
     add_defines(
         "F4SE_SUPPORT_XBYAK",
         "_UNICODE",
-        "_SKMP_DISABLE_BOOST_SERIALIZATION"
+        "_SKMP_DISABLE_BOOST_SERIALIZATION",
+        "COMMONLIB_RUNTIMECOUNT=3"
     )
 
     -- Generated headers/resources. Version values are computed in on_load

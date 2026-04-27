@@ -11,14 +11,7 @@ namespace HFPF
 				LoadPluginINI_C.address(),
 				reinterpret_cast<std::uintptr_t>(PostLoadPluginINI_Hook),
 				m_Instance.LoadPluginINI_O)) {
-			const auto addr = LoadPluginINI_C.address();
-			const auto base = REX::FModule::GetExecutingModule().GetBaseAddress();
-			const auto firstByte = addr ? *reinterpret_cast<const std::uint8_t*>(addr) : 0;
-			logger::critical(
-				"[Events] LoadPluginINI hook target 0x{:X} (Fallout4.exe+0x{:X}) byte=0x{:02X} (expected 0xE8 CALL)",
-				static_cast<std::uintptr_t>(addr),
-				static_cast<std::uintptr_t>(addr - base),
-				firstByte);
+			logger::critical("[Events] Could not install event hooks");
 			return false;
 		}
 
